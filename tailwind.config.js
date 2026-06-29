@@ -10,6 +10,7 @@ module.exports = {
             colors: {
                 rojo: "#EB5757",
                 amarillo: "#F2C94C",
+                amarilloDark: "#E3B939",
                 grisBackground: "#F5F5F5",
                 grisClaro: "#828282",
                 grisTopo: "#4F4F4F",

@@ -27,7 +27,20 @@ async function getFollowedBooks(id) {
 
 async function getUser(id) {
     const user = await prisma.user.findUnique({
-        include: { author: { include:{ books: true, profile_file:true, header_file:true, socialmedias:true } } },
+        include: { 
+            author: { 
+                include:{ 
+                    profile_file:true, 
+                    header_file:true, 
+                    socialmedias:true,
+                    books: {
+                        include: {
+                            cover_file:true
+                        }
+                    } 
+                } 
+            } 
+        },
         where: { id: id},
     });
     return user;
@@ -46,7 +59,8 @@ export default async function Profile() {
     const followedAuthors = await getFollowedAuthors(session.user.id );
     const followedBooks = await getFollowedBooks(session.user.id );
     const user = await getUser(session.user.id );
-    console.log(user);
+
+    console.log(user.author);
 
     return (
         <div className="container mx-auto flex flex-col lg:flex-row py-5 gap-8">
@@ -56,7 +70,7 @@ export default async function Profile() {
                             <BookList 
                                 title="Tus libros" 
                                 bookList={user.author?.books}
-                                author={true}
+                                author={false}
                                 cols={4}
                                 create={true}
                             />

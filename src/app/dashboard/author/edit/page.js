@@ -3,6 +3,7 @@ import { getAuthSession } from "@/utils/auth";
 //import EditAuthorForm from "@/components/author/editProfile";
 import FileInput from '@/components/forms/fileInput';
 import SocialMedia from '@/components/forms/socialMedia';
+import SubmitButton from '@/components/forms/submitButton';
 import path from "path";
 import fs from "fs";
 import { writeFile } from 'fs/promises'
@@ -11,6 +12,11 @@ import slugify from "slugify";
 async function getAuthor(id) {
     const author = await prisma.author.findUnique({
         where: { id_user: id},
+        include: { 
+            socialmedias: true,
+            profile_file: true,
+            header_file: true
+        },
     });
     return author;
     
@@ -27,6 +33,9 @@ export default async function EditAuthor({params}) {
 
     const author = await getAuthor(session.user.id);
 
+    if(!author){
+        console.log('no hay usuario');
+    }
 
     const submitForm = async (formData) => {
         "use server"
@@ -36,10 +45,9 @@ export default async function EditAuthor({params}) {
         const bio = formData.get('bio');
         const profilePhoto = Number(formData.get('profilePhoto'));
         const headerPhoto = Number(formData.get('headerPhoto'));
-        const socialmediaType = formData.getAll('socialmediaType');
+        const socialmediaLabel = formData.getAll('socialmediaLabel');
         const socialmediaUrl = formData.getAll('socialmediaUrl');
         
-
         const author = await prisma.author.upsert({
             where: { id_user: session.user.id },
             update: { 
@@ -61,8 +69,7 @@ export default async function EditAuthor({params}) {
 
         if(author){
 
-            console.log(author);
-            const newFolder = `./public/img/users/${author.id}/`;
+            const newFolder = `./public/img/authors/${author.id}/`;
             if (!fs.existsSync(newFolder)){
                 fs.mkdirSync(newFolder);
             }
@@ -82,7 +89,7 @@ export default async function EditAuthor({params}) {
                 const newProfileFile = await prisma.file.update({
                     where: { id: author.profile_photo },
                     data: {
-                        path: profileFileNewPath
+                        path: newFolder
                     }
                 })
 
@@ -117,17 +124,24 @@ export default async function EditAuthor({params}) {
             }
             
             if(socialmediaUrl){
+                console.log(author.id);
+
+                let result = await prisma.AuthorSocialmedia.deleteMany({
+                    where: {
+                        id_author: author.id
+                    }
+                })
 
                 for (const key in socialmediaUrl) {
-
-                    let social = await prisma.AuthorSocialmedia.create({
-                        data: {
-                          url: socialmediaUrl[key],
-                          type: socialmediaType[key],
-                          id_author: author.id
-                        },
-                      })
-
+                    if(socialmediaUrl[key] !== null && socialmediaLabel[key] !== null ){
+                        let social = await prisma.AuthorSocialmedia.create({
+                            data: {
+                              url: socialmediaUrl[key],
+                              type: socialmediaLabel[key],
+                              id_author: author.id
+                            },
+                        })
+                    }
                 }
             }
             redirect('/dashboard/profile')
@@ -169,8 +183,10 @@ export default async function EditAuthor({params}) {
                         <div className="md:w-2/3">
                             <FileInput
                                 name="profilePhoto"
-                                authorId={author?.id}
-                                value={author?.profile_photo}
+                                parentId={author?.id}
+                                imageRecord={author?.profile_file}
+                                imageId = {author?.profile_file?.id}
+                                value={author?.profile_file?.hash}
                                 imageType="author"
                             />
                         </div>
@@ -185,8 +201,10 @@ export default async function EditAuthor({params}) {
                         <div className="md:w-2/3">
                             <FileInput
                                 name="headerPhoto"
-                                authorId={author?.id}
-                                value={author?.header_photo}
+                                parentId={author?.id}
+                                imageRecord={author?.header_file}
+                                imageId = {author?.header_file?.id}
+                                value={author?.header_file?.hash}
                                 imageType="author"
                             />
                         </div>
@@ -199,7 +217,8 @@ export default async function EditAuthor({params}) {
                             </label>
                         </div>
                         <div className="md:w-2/3">
-                            <SocialMedia />
+
+                                <SocialMedia socialmedias={author?.socialmedias}/>
                         </div>
                     </div>
 
@@ -207,9 +226,7 @@ export default async function EditAuthor({params}) {
                     <div className="md:flex md:items-center">
                         <div className="md:w-1/3"></div>
                         <div className="md:w-2/3">
-                            <button className="shadow bg-rojo hover:bg-white focus:shadow-outline focus:outline-none text-white hover:text-rojo font-bold py-2 px-4 rounded disabled" type="submit">
-                                Save
-                            </button>
+                            <SubmitButton buttonText='Generando usuario' />
                         </div>
                     </div>
 

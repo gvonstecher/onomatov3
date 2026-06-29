@@ -19,7 +19,6 @@ model Account {
   scope             String?
   id_token          String?
   session_state     String?
-
   userId            String
   user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
 
@@ -30,7 +29,6 @@ model Session {
   id           String   @id @default(cuid())
   sessionToken String   @unique
   expires      DateTime
-
   userId       String
   user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
@@ -44,149 +42,159 @@ model VerificationToken {
 }
 
 model User {
-  id                      String    @id(map: "users_pkey") @unique(map: "users_id_key") @default(cuid())
-  name                    String?   @db.VarChar
-  email                   String?   @db.VarChar @unique
-  emailVerified           DateTime?
-  image                   String?
-  author                  Author?
-
-  accounts                Account[]
-  sessions                Session[]
-  followedAuthors         FollowedAuthor[]
-  followedBooks           FollowedBook[]
-  votedBooks              BookVote[]
-
+  id              String           @id(map: "users_pkey") @unique(map: "users_id_key") @default(cuid())
+  name            String?          @db.VarChar
+  email           String?          @unique @db.VarChar
+  emailVerified   DateTime?
+  image           String?
+  accounts        Account[]
+  author          Author?
+  votedBooks      BookVote[]
+  followedAuthors FollowedAuthor[]
+  followedBooks   FollowedBook[]
+  orders          Order[]
+  sessions        Session[]
 }
 
 model Author {
-  id                  Int                 @id(map: "authors_pkey") @unique(map: "authors_id_key") @default(autoincrement())
-  name                String?
-  slug                String?             @unique(map: "authors_slug_key")
-  bio                 String
-  id_user             String              @unique
-  user                User                @relation(fields: [id_user], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  
-  profile_photo       Int?
-  profile_file        File?                 @relation("profile_photo", fields: [profile_photo], references: [id], onDelete: NoAction, onUpdate: NoAction)
-
-  header_photo       Int?
-  header_file        File?                 @relation("header_photo", fields: [header_photo], references: [id], onDelete: NoAction, onUpdate: NoAction)
-
-  socialmedias        AuthorSocialmedia[]
-  books               Book[]
-  followedBy          FollowedAuthor[]
+  id            Int                 @id(map: "authors_pkey") @unique(map: "authors_id_key") @default(autoincrement())
+  name          String?
+  slug          String?             @unique(map: "authors_slug_key")
+  bio           String
+  id_user       String              @unique
+  profile_photo Int?
+  header_photo  Int?
+  header_file   File?               @relation("header_photo", fields: [header_photo], references: [id])
+  user          User                @relation(fields: [id_user], references: [id], onDelete: Cascade)
+  profile_file  File?               @relation("profile_photo", fields: [profile_photo], references: [id])
+  socialmedias  AuthorSocialmedia[]
+  books         Book[]
+  followedBy    FollowedAuthor[]
 }
 
 model AuthorSocialmedia {
   id        Int     @id(map: "authors_socialmedia_pkey") @default(autoincrement())
   url       String? @db.VarChar
   type      String?
-
   id_author Int
-  author    Author @relation(fields: [id_author], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  author    Author  @relation(fields: [id_author], references: [id], onDelete: Cascade)
 }
 
 model Book {
-  id                  Int       @id(map: "books_pkey") @unique(map: "books_id_key") @default(autoincrement())
-  created_at          DateTime? @default(now()) @db.Timestamptz(6)
-  title               String?
-  description         String?
-  price               Float?
-  last_free_page      Int?      @db.SmallInt
-  slug                String?
-  
-  id_author           Int
-  author              Author   @relation(fields: [id_author], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  
-  cover               Int?
-  cover_file          File?                 @relation("cover_photo",fields: [cover], references: [id], onDelete: NoAction, onUpdate: NoAction)
-
-
-  pages               BookPage[]
-  followedBy          FollowedBook[]
-  tags                BookTag[]
-  votes               BookVote[]
+  id             Int            @id(map: "books_pkey") @unique(map: "books_id_key") @default(autoincrement())
+  created_at     DateTime?      @default(now()) @db.Timestamptz(6)
+  title          String?
+  description    String?
+  price          Float?
+  last_free_page Int?           @db.SmallInt
+  slug           String?
+  id_author      Int
+  cover          Int?
+  cover_file     File?          @relation("cover_photo", fields: [cover], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  author         Author         @relation(fields: [id_author], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  pages          BookPage[]
+  tags           BookTag[]
+  votes          BookVote[]
+  followedBy     FollowedBook[]
+  orders         Order[]
 }
 
 model Tag {
-  id                Int       @id(map: "tags_pkey") @unique(map: "tags_id_key") @default(autoincrement())
-  created_at        DateTime? @default(now()) @db.Timestamptz(6)
-  name              String?
-  
-  books             BookTag[]
+  id         Int       @id(map: "tags_pkey") @unique(map: "tags_id_key") @default(autoincrement())
+  created_at DateTime? @default(now()) @db.Timestamptz(6)
+  name       String?
+  books      BookTag[]
 }
 
 model BookPage {
   id          Int       @id(map: "books_pages_pkey") @unique(map: "books_pages_id_key") @default(autoincrement())
   created_at  DateTime? @default(now()) @db.Timestamptz(6)
-  filename    String?   @db.VarChar
-  page_number Decimal?  @default(0) @db.Decimal
-  
+  page_number Int?      @default(0) @db.SmallInt
   id_book     Int
-  book        Book     @relation(fields: [id_book], references: [id])
-  
+  page_photo  Int?
+  book        Book      @relation(fields: [id_book], references: [id])
+  page_file   File?     @relation("page_photo", fields: [page_photo], references: [id])
 }
 
 model BookTag {
-  id          Int       @id(map: "books_tags_pkey") @default(autoincrement())
-  created_at  DateTime? @default(now()) @db.Timestamptz(6)
-
-  id_book     Int
-  book        Book     @relation(fields: [id_book], references: [id])
-  
-  id_tag      Int
-  tag         Tag     @relation(fields: [id_tag], references: [id])
+  id         Int       @id(map: "books_tags_pkey") @default(autoincrement())
+  created_at DateTime? @default(now()) @db.Timestamptz(6)
+  id_book    Int
+  id_tag     Int
+  book       Book      @relation(fields: [id_book], references: [id])
+  tag        Tag       @relation(fields: [id_tag], references: [id])
 }
 
 model BookVote {
   id         Int       @id(map: "books_votes_pkey") @default(autoincrement())
   created_at DateTime? @default(now()) @db.Timestamptz(6)
-
   id_user    String
-  user        User     @relation(fields: [id_user], references: [id])
-  
   id_book    Int
-  book        Book     @relation(fields: [id_book], references: [id])
+  book       Book      @relation(fields: [id_book], references: [id])
+  user       User      @relation(fields: [id_user], references: [id])
 }
 
 model FollowedAuthor {
-  id        Int  @id(map: "followed_authors_pkey") @default(autoincrement())
-
   id_user   String
-  user      User     @relation(fields: [id_user], references: [id])
-  
   id_author Int
-  author    Author   @relation(fields: [id_author], references: [id])
+  author    Author @relation(fields: [id_author], references: [id], onDelete: Cascade)
+  user      User   @relation(fields: [id_user], references: [id], onDelete: Cascade)
+  @@id(name: "id",[id_user, id_author])
+
 }
 
 model FollowedBook {
-  id            Int      @id(map: "followed_books_pkey") @unique(map: "followed_books_id_key") @default(autoincrement())
   bought        Boolean? @default(false)
   lastpage_read Decimal? @default(0) @db.Decimal
-
   id_user       String
-  user          User     @relation(fields: [id_user], references: [id])
-  
   id_book       Int
-  book          Book     @relation(fields: [id_book], references: [id])
+  id_order      Int?
+  book          Book     @relation(fields: [id_book], references: [id], onDelete: Cascade)
+  order         Order?    @relation(fields: [id_order], references: [id], onDelete: Cascade)
+  user          User     @relation(fields: [id_user], references: [id], onDelete: Cascade)
+  @@id(name: "id",[id_user, id_book])
 }
 
-
 model File {
-  id                      Int    @id(map: "files_pkey") @unique(map: "files_id_key") @default(autoincrement())
-  name                    String
-  hash                    String
-  path                    String
-  type                    String
-  size                    Int
-  width                   Int?
-  height                  Int?
-  created_at              DateTime? @default(now()) @db.Timestamptz(6)
-  updated_at              DateTime? @default(now()) @db.Timestamptz(6)
-  created_by              String
+  id             Int        @id(map: "files_pkey") @unique(map: "files_id_key") @default(autoincrement())
+  name           String
+  hash           String
+  path           String
+  type           String
+  size           Int
+  width          Int?
+  height         Int?
+  created_at     DateTime?  @default(now()) @db.Timestamptz(6)
+  updated_at     DateTime?  @default(now()) @db.Timestamptz(6)
+  created_by     String
+  header_photos  Author[]   @relation("header_photo")
+  profile_photos Author[]   @relation("profile_photo")
+  cover_photo    Book[]     @relation("cover_photo")
+  page_photo     BookPage[] @relation("page_photo")
+}
 
-  profile_photos          Author[] @relation("profile_photo")
-  header_photos           Author[] @relation("header_photo")
-  cover_photo             Book[]   @relation("cover_photo")
+model Order {
+  id             Int            @id(map: "orders_pkey") @unique(map: "orders_id_key") @default(autoincrement())
+  status         String?
+  id_user        String
+  id_book        Int
+  created_at     DateTime?      @default(now()) @db.Timestamptz(6)
+  price          Float?
+  currency_id    String?
+  mercadopago_id String?
+  followedBooks  FollowedBook[]
+  book           Book           @relation(fields: [id_book], references: [id], onDelete: Cascade)
+  user           User           @relation(fields: [id_user], references: [id], onDelete: Cascade)
+  payments       Payment[]
+}
+
+model Payment {
+  id                     Int       @id(map: "payments_pkey") @unique(map: "payments_id_key") @default(autoincrement())
+  id_order               Int
+  date                   DateTime? @default(now()) @db.Timestamptz(6)
+  amount                 Float?
+  currency_id            String?
+  mercadopago_payment_id BigInt    @unique(map: "payments_mercadopago_payment_id_key")
+  status                 String
+  order                  Order     @relation(fields: [id_order], references: [id], onDelete: Cascade)
 }

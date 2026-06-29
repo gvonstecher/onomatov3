@@ -16,25 +16,23 @@ export async function POST(req){
 
     const formData = await req.formData();
     const file = formData.get('file');
-    console.log("form data", file);
     
     if (!file) {
         return NextResponse.json({ success: false })
     }
 
+
     var split = file.name.split('.');
     var filename = split[0];
     var extension = split[1];
 
-
-    const newFilename = hash(filename)+'.'+extension;
+    const newFilename = hash(filename+file.lastModified)+'.'+extension;
     const bytes = await file.arrayBuffer()
     const buffer = Buffer.from(bytes)
 
-    const path = `img/tmp/`
+    const path = `public/img/tmp/`
     const filePath = path + newFilename;
     await writeFile(filePath, buffer)
-    console.log(`open ${filePath} to see the uploaded file`)
 
     const imagen = sharp(buffer);
     const metadata = await imagen.metadata();
@@ -64,10 +62,11 @@ export async function DELETE(req){
             id: body.id
         }
     })
-    console.log(result);
 
-    if (fs.existsSync(result.path)) {
-        fs.unlinkSync(result.path);
+    let fileUrl = result.path + result.hash
+
+    if (fs.existsSync(fileUrl)) {
+        fs.unlinkSync(fileUrl);
         return NextResponse.json({ error: 'Archivo eliminado' },{ status: 200 })
       } else {
         return NextResponse.json({ error: 'Error' })

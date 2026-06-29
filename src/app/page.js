@@ -6,7 +6,10 @@ import prisma from "@/utils/connect";
 
 async function getBooks() {
     const books = await prisma.book.findMany({
-        include: { author: true},
+        include: { 
+			author: true,
+			cover_file:true 
+		},
         take: 6
     });
     return books;
@@ -14,6 +17,9 @@ async function getBooks() {
 
 async function getAuthors() {
     const authors = await prisma.author.findMany({
+		include: {
+			profile_file: true
+		},
         take: 6
     });
     return authors;
