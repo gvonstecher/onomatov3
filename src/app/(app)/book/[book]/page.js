@@ -78,7 +78,7 @@ export default async function Book({params}) {
 
     const session = await getAuthSession();
 
-    const bookSlug = params.book;
+    const bookSlug = (await params).book;
 
     const book = await getBook(bookSlug);
     const author = await getAuthor(book.id_author, book.id);

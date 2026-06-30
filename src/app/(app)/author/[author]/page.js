@@ -35,7 +35,8 @@ async function getBooks(authorId) {
 
 export default async function Author({params}) {
 
-    const author = await getAuthor(params.author);
+    const { author: authorSlug } = await params;
+    const author = await getAuthor(authorSlug);
     const books = await getBooks(author.id);
 
     return (

@@ -38,3 +38,10 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# payload upload dirs (runtime binaries, not source)
+/media
+/uploads
+
+# playwright mcp artifacts
+/.playwright-mcp

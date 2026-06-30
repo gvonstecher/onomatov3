@@ -101,7 +101,7 @@ export default async function BookPages({params}) {
 
     const session = await getAuthSession();
 
-    const bookSlug = params.book;
+    const bookSlug = (await params).book;
     const book = await getBook(bookSlug);
 
     const bookFollowed = await getBookFollowed(book.id, session.id);
