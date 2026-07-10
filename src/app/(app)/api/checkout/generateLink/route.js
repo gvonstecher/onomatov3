@@ -1,6 +1,6 @@
 import mercadopago from "mercadopago";
-import { NextRequest } from "next/server";
-import { bool } from "sharp";
+import { getPayload } from "payload";
+import config from "@payload-config";
 
 // A fines del tutorial pongo un token de muestra, pero siempre esta información se tiene que manejar
 // como variable de entorno en un archivo .env
@@ -39,14 +39,12 @@ export async function POST(req, res) {
         const response = await mercadopago.preferences.create(preference);
         console.log(response);
 
-        const result = await prisma.order.update({
-            where:{
-                id: data.orderId
-            },
-            data:{
-               mercadopago_id: response.body.id
-            }
-        })
+        const payload = await getPayload({ config });
+        await payload.update({
+            collection: "orders",
+            id: data.orderId,
+            data: { mercadopagoId: response.body.id },
+        });
 
         return new Response(JSON.stringify({ url: response.body.init_point }), {
             status: 200,

@@ -1,6 +1,7 @@
 import { getAuthSession } from "@/utils/auth";
-import { NextRequest, NextResponse } from 'next/server';
-import prisma from "@/utils/connect";
+import { NextResponse } from 'next/server';
+import { getPayload } from "payload";
+import config from "@payload-config";
 
 export async function POST(req){
     const session = await getAuthSession();
@@ -8,46 +9,39 @@ export async function POST(req){
         return NextResponse.json({ error: 'Not Authorized' },{ status: 401 })
     }
 
+    const payload = await getPayload({ config });
     const data = await req.json();
-    console.log(data);
 
-    const result = await prisma.order.create({
+    const order = await payload.create({
+        collection: "orders",
         data: {
             status: 'pending',
-            id_user: session.user.id,
-            id_book: data.bookId,
-            created_at: new Date(),
+            user: session.user.id,
+            book: data.bookId,
             price: data.price,
-            currency_id: 'ARS'
-            
-        }
+            currencyId: 'ARS',
+        },
     });
 
-    if(data.suscribeAuthor){
-        console.log('entre');
-        const resultFollowed = await prisma.followedAuthor.create({
-            data: {
-                id_user: session.user.id,
-                id_author: data.authorId    
-            }
+    if (data.suscribeAuthor) {
+        await payload.create({
+            collection: "followed-authors",
+            data: { user: session.user.id, author: data.authorId },
         });
     }
 
-    const resultFollowedBook = await prisma.followedBook.upsert({
-        where: {
-            id: {
-                id_user: session.user.id,
-                id_book: data.bookId,
-            }
-        },
-        create: {
-            id_user: session.user.id,
-            id_book: data.bookId,
-            bought: false
-        },
-        update:{
-        }
+    // Upsert the followed-book (bought: false) so it exists before payment.
+    const existing = await payload.find({
+        collection: "followed-books",
+        where: { user: { equals: session.user.id }, book: { equals: data.bookId } },
+        limit: 1,
     });
+    if (!existing.docs[0]) {
+        await payload.create({
+            collection: "followed-books",
+            data: { user: session.user.id, book: data.bookId, bought: false },
+        });
+    }
 
-    return NextResponse.json(result);
+    return NextResponse.json(order);
 }
