@@ -46,9 +46,25 @@ export const extractBookPages: TaskConfig<'extractBookPages'> = {
 
     const buffer = await readFile(path.join(bookFilesDir, pdfFile.filename))
 
-    // Idempotency: wipe previously generated pages so re-uploading a PDF
-    // regenerates cleanly instead of duplicating.
+    // Idempotency: remove previously generated pages AND their images so a
+    // re-run regenerates cleanly instead of leaving duplicate pages or
+    // orphaned media.
+    const existingPages = await payload.find({
+      collection: 'book-pages',
+      where: { book: { equals: bookId } },
+      limit: 100000,
+      depth: 0,
+    })
     await payload.delete({ collection: 'book-pages', where: { book: { equals: bookId } } })
+    for (const doc of existingPages.docs) {
+      if (doc.image) {
+        try {
+          await payload.delete({ collection: 'media', id: doc.image })
+        } catch (err) {
+          payload.logger.error(`extractBookPages: could not delete old media ${doc.image}: ${err}`)
+        }
+      }
+    }
 
     const document = await pdf(buffer, { scale: 3 })
     const total = document.length

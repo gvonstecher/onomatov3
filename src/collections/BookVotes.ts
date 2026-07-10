@@ -7,6 +7,10 @@ export const BookVotes: CollectionConfig = {
     group: 'Engagement',
     defaultColumns: ['user', 'book', 'createdAt'],
   },
+  indexes: [
+    // One vote per (user, book).
+    { fields: ['user', 'book'], unique: true },
+  ],
   fields: [
     {
       name: 'user',

@@ -9,6 +9,10 @@ export const FollowedBooks: CollectionConfig = {
     group: 'Engagement',
     defaultColumns: ['user', 'book', 'bought'],
   },
+  indexes: [
+    // One follow row per (user, book).
+    { fields: ['user', 'book'], unique: true },
+  ],
   fields: [
     {
       name: 'user',

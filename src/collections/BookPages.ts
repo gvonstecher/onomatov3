@@ -13,6 +13,10 @@ export const BookPages: CollectionConfig = {
     useAsTitle: 'pageNumber',
     defaultColumns: ['book', 'pageNumber'],
   },
+  indexes: [
+    // A book can't have two rows for the same page number.
+    { fields: ['book', 'pageNumber'], unique: true },
+  ],
   fields: [
     {
       name: 'pageNumber',
