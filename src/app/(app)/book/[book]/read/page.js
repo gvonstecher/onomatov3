@@ -1,249 +1,115 @@
 import Image from "next/image";
-import Link from 'next/link';
+import { notFound } from "next/navigation";
+import { getPayload } from "payload";
+import config from "@payload-config";
 import { getAuthSession } from "@/utils/auth";
-import { Sidebar } from '@/components/layout/authorSidebar';
 import ComprarBtn from "@/components/actions/comprarBtn";
 import LoginBtn from "@/components/actions/loginBtn";
 
-
-async function getBook(slug) {
-    const book = await prisma.Book.findFirst({
-        where: {
-            slug: slug,
-        },
-        include:{
-            cover_file:true,
-            followedBy:true
-        }
+async function getBook(payload, slug) {
+    const res = await payload.find({
+        collection: "books",
+        where: { slug: { equals: slug } },
+        depth: 1,
+        limit: 1,
     });
-    return book;  
-};
-
-async function getBookFollowed(bookId, userId) {
-    const bookFollowed = await prisma.FollowedBook.findFirst({
-        where: {
-            id_book: bookId,
-            id_user:userId
-        }
-    });
-    return bookFollowed;  
-};
-
-async function getBookPages(bookId, lastFreePage = 0){
-    let bookPagesQuery = null;
-
-    if(lastFreePage){
-        bookPagesQuery = {
-            where: {
-                id_book: bookId,
-                page_number: {
-                    lte: (lastFreePage),
-                }
-            },
-            orderBy: {
-                page_number:'asc'
-            },
-            include: {
-                page_file: true
-            }
-        };
-    } else {
-        bookPagesQuery = {
-            where: {
-                id_book: bookId,
-                
-            },
-            orderBy: {
-                page_number:'asc'
-            },
-            include: {
-                page_file: true
-            }
-        };
-    }
-
-    const bookPages = await prisma.BookPage.findMany(bookPagesQuery);
-    return bookPages;
-
+    return res.docs[0];
 }
 
-async function getLastPage(bookId, lastFreePage){
-    const lastPage = await prisma.BookPage.findFirst({
-        where: {
-            id_book: bookId,
-            page_number: (lastFreePage + 1),
-        },
-        include: {
-            page_file: true
-        }
+async function isBought(payload, bookId, userId) {
+    if (!userId) return false;
+    const res = await payload.find({
+        collection: "followed-books",
+        where: { book: { equals: bookId }, user: { equals: userId } },
+        limit: 1,
     });
-
-    return lastPage;
+    return Boolean(res.docs[0]?.bought);
 }
 
-
-async function getAuthor(idAuthor) {
-    const author = await prisma.author.findUnique({
-        where: { id: idAuthor},
-        include: { 
-            socialmedias: true,
-            profile_file: true,
-            header_file: true
-        },
+async function getPages(payload, bookId, upTo) {
+    const where = { book: { equals: bookId } };
+    if (upTo) where.pageNumber = { less_than_equal: upTo };
+    const res = await payload.find({
+        collection: "book-pages",
+        where,
+        sort: "pageNumber",
+        depth: 1,
+        limit: 1000,
     });
-    return author;
-    
-};
+    return res.docs;
+}
 
+async function getTeaserPage(payload, bookId, pageNumber) {
+    const res = await payload.find({
+        collection: "book-pages",
+        where: { book: { equals: bookId }, pageNumber: { equals: pageNumber } },
+        depth: 1,
+        limit: 1,
+    });
+    return res.docs[0] || null;
+}
 
-export default async function BookPages({params}) {
-
+export default async function BookReader({ params }) {
 
     const session = await getAuthSession();
-
     const bookSlug = (await params).book;
-    const book = await getBook(bookSlug);
 
-    const bookFollowed = await getBookFollowed(book.id, session.id);
-    console.log(bookFollowed);
+    const payload = await getPayload({ config });
+    const book = await getBook(payload, bookSlug);
+    if (!book) notFound();
 
-    let lastPageNum = null;
+    const bought = await isBought(payload, book.id, session?.user?.id);
+
+    let bookPages = [];
     let lastPage = null;
 
-    if(session & bookFollowed & bookFollowed?.bought){
-        lastPageNum = 0;
+    if (bought) {
+        bookPages = await getPages(payload, book.id);
     } else {
-        lastPageNum = book.last_free_page;
-        lastPage = await getLastPage(book.id, lastPageNum);
-    };
-    
-    const bookPages = await getBookPages(book.id, lastPageNum);
+        const freePages = book.lastFreePage || 0;
+        bookPages = await getPages(payload, book.id, freePages);
+        lastPage = await getTeaserPage(payload, book.id, freePages + 1);
+    }
 
-
-    const author = await getAuthor(book.id_author, book.id);
-
-   
-    return(
+    return (
         <div className="comicContainer text-center">
             {bookPages.map((page) => (
                 <Image
                     key={page.id}
-                    src={`/img/books/${book.id}/${page.page_file.hash}`}
-                    alt={book.slug + page.page_number}
+                    src={page.image?.url || "/img/bookCover1.png"}
+                    alt={book.slug + page.pageNumber}
                     className="py-1 mx-auto"
                     width={960}
                     height={1024}
                     sizes="480 640 780 960"
-                    style={{
-                        maxWidth: '100%',
-                        height: 'auto',
-                    }}
+                    style={{ maxWidth: '100%', height: 'auto' }}
                 />
             ))}
-            {
-                (lastPage) && (
-                    session ? (
-                        <div className="relative">
-                            
-                            <div className="absolute w-full h-2/4 top-0 bg-gradient-to-b from-transparent to-white"></div>
-                            <div className="absolute w-full h-2/4 bottom-0 bg-white"></div>
-                            <div className="absolute top-2/4 text-center w-full z-10">
-                                <ComprarBtn book={book} author={author} size="big"/>
-                            </div>
-                            <Image
-                                src={`/img/books/${book.id}/${lastPage.page_file.hash}`}
-                                alt="last"
-                                className="py-1 mx-auto"
-                                width={960}
-                                height={1024}
-                                sizes="480 640 780 960"
-                                style={{
-                                    maxWidth: '100%',
-                                    height: 'auto',
-                                }}
-                            />
-                        </div>
-                    ) : (
-                        <div className="relative">
-                            <div className="absolute w-full h-2/4 top-0 bg-gradient-to-b from-transparent to-white"></div>
-                            <div className="absolute w-full h-2/4 bottom-0 bg-white"></div>
-                            <div className="absolute top-2/4 text-center w-full z-10">
-                                <LoginBtn texto={'Comprar libro Digital'} />
-                                <ComprarBtn book={book} author={author} size="big"/>
-                            </div>
-                            <Image
-                                src={`/img/books/${book.id}/${lastPage.page_file.hash}`}
-                                alt="last"
-                                className="py-1 mx-auto"
-                                width={960}
-                                height={1024}
-                                sizes="480 640 780 960"
-                                style={{
-                                    maxWidth: '100%',
-                                    height: 'auto',
-                                }}
-                            />
-                        </div>
-                    ) 
-                )
-            }
+            {lastPage && (
+                <div className="relative">
+                    <div className="absolute w-full h-2/4 top-0 bg-gradient-to-b from-transparent to-white"></div>
+                    <div className="absolute w-full h-2/4 bottom-0 bg-white"></div>
+                    <div className="absolute top-2/4 text-center w-full z-10">
+                        {session
+                            ? <ComprarBtn book={book} author={book.author} size="big" />
+                            : (
+                                <>
+                                    <LoginBtn texto={'Comprar libro Digital'} />
+                                    <ComprarBtn book={book} author={book.author} size="big" />
+                                </>
+                            )}
+                    </div>
+                    <Image
+                        src={lastPage.image?.url || "/img/bookCover1.png"}
+                        alt="last"
+                        className="py-1 mx-auto"
+                        width={960}
+                        height={1024}
+                        sizes="480 640 780 960"
+                        style={{ maxWidth: '100%', height: 'auto' }}
+                    />
+                </div>
+            )}
         </div>
-    )
+    );
 }
-/*
-export const getServerSideProps = async (context) => {
-    const session = await getSession(context);
-
-    const book = await prisma.Book.findFirst({
-        where: {
-            slug: context.params.book,
-        }
-    });
-
-    let lastPage = null;
-    let bookPagesQuery = null;
-    
-    if(session){
-        bookPagesQuery = {
-                where: {
-                    id_book: book.id,
-                    
-                },
-                orderBy: {
-                    page_number:'asc'
-                }
-            };
-    } else {
-        bookPagesQuery = {
-            where: {
-                id_book: book.id,
-                page_number: {
-                    lte: (book.last_free_page),
-                }
-            },
-            orderBy: {
-                page_number:'asc'
-            }
-        };
-
-        lastPage = await prisma.BookPage.findFirst({
-            where: {
-                id_book: book.id,
-                page_number: (book.last_free_page + 1),
-            }
-        });
-    }
-    
-    const bookPages = await prisma.BookPage.findMany(bookPagesQuery);
-    return {
-        props: { 
-          book: JSON.parse(JSON.stringify(book)),
-          bookPages: JSON.parse(JSON.stringify(bookPages)),
-          lastPage: JSON.parse(JSON.stringify(lastPage))
-       },
-      }
-
-
-}
-
-*/

@@ -11,12 +11,10 @@
     "payload": "payload"
   },
   "dependencies": {
-    "@next-auth/prisma-adapter": "^1.0.7",
     "@payloadcms/db-postgres": "^3.85.1",
     "@payloadcms/next": "^3.85.1",
     "@payloadcms/richtext-lexical": "^3.85.1",
     "@payloadcms/ui": "^3.85.1",
-    "@prisma/client": "^5.12.1",
     "@types/mercadopago": "^1.5.11",
     "axios": "^1.6.8",
     "buffer-image-size": "^0.6.4",
@@ -25,7 +23,6 @@
     "jszip": "^3.10.1",
     "mercadopago": "^1.5.16",
     "next": "16.2.9",
-    "next-auth": "^4.24.14",
     "object-hash": "^3.0.0",
     "payload": "^3.85.1",
     "pdf-to-img": "^5.0.0",
@@ -47,7 +44,6 @@
     "eslint": "^9",
     "eslint-config-next": "16.2.9",
     "postcss": "^8",
-    "prisma": "^5.12.1",
     "tailwindcss": "^3.3.0",
     "typescript": "^6.0.3"
   }
