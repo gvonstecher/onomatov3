@@ -1,57 +1,47 @@
 "use client";
-import React from "react";
-import { useState } from "react";
+import React, { useState } from "react";
+
+// Matches the `type` select options of the Authors.socialmedias array field.
+const TYPES = ["twitter", "instagram", "facebook", "youtube", "tiktok", "website"];
 
 export default function SocialMedia({ socialmedias }) {
-    let initialLinks = [];
-    const [links, setLinks] = useState(initialLinks);
-
-    if (socialmedias) {
-        socialmedias.map((socialmedia) => {
-            let object = {
-                url: socialmedia.url,
-                label: socialmedia.type,
-            };
-            initialLinks.push(object);
-        });
-    }
+    const initial = (socialmedias || []).map((s) => ({ url: s.url || "", label: s.type || "" }));
+    const [links, setLinks] = useState(initial);
 
     const addFields = (e) => {
-		e.preventDefault();
-		let object = {
-			url: '',
-			label: ''
-		}
-    	setLinks([...links, object])
-  	}
+        e.preventDefault();
+        setLinks([...links, { url: "", label: "" }]);
+    };
 
     return (
         <div className="App">
-            {links.map((link, index) => {
-                return (
-                    <div key={index} className="mt-4 flex gap-4 items-center">
-                        <input
-                            name="socialmediaUrl"
-                            placeholder="http://ejemplo.com"
-                            className="form-input w-full focus:bg-white border p-2"
-                            defaultValue={link.url}
-                        />
-                        <input
-                            name="socialmediaLabel"
-                            placeholder="Etiqueta"
-                            className="form-input w-full focus:bg-white border p-2"
-                            defaultValue={link.label}
-                        />
-                    </div>
-                );
-            })}
+            {links.map((link, index) => (
+                <div key={index} className="mt-4 flex gap-4 items-center">
+                    <input
+                        name="socialmediaUrl"
+                        placeholder="http://ejemplo.com"
+                        className="form-input w-full focus:bg-white border p-2"
+                        defaultValue={link.url}
+                    />
+                    <select
+                        name="socialmediaLabel"
+                        className="form-input w-full focus:bg-white border p-2"
+                        defaultValue={link.label}
+                    >
+                        {TYPES.map((t) => (
+                            <option key={t} value={t}>
+                                {t}
+                            </option>
+                        ))}
+                    </select>
+                </div>
+            ))}
             <button
                 onClick={addFields}
                 className="bg-rojo text-white py-1 px-3 mt-2 rounded-full text-sm"
             >
                 Agregar
             </button>
-
             <br />
         </div>
     );

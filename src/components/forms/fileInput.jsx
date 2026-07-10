@@ -1,98 +1,56 @@
-"use client"
-import React from "react";
-import { useState } from "react";
-import { useRouter } from 'next/router';
-import Image from "next/image";
+"use client";
+import React, { useState } from "react";
 
+// Uploads a single image to Payload's Media collection and stores the created
+// media id in a hidden input (read by the server action). Replaces the old
+// /api/file + Prisma File flow.
+export default function FileInput({ name, media }) {
+	const [preview, setPreview] = useState(media?.url || null);
+	const [mediaId, setMediaId] = useState(media?.id || "");
+	const [spinner, setSpinner] = useState(false);
 
-export default function FileInput({ imageRecord = {hash:'', id:0}, value, name, parentId,imageType='author'}) {
-	console.log(parentId);
-	/*let imageFolder = '';
-	let internalImageFolder = ''
-	if(imageType == 'author'){
-		imageFolder = `/img/authors/${parentId}/`;
-		internalImageFolder = `./public/img/authors/${parentId}/`;
-	} else if(imageType == 'book'){
-		imageFolder = `/img/books/${parentId}/`;
-		internalImageFolder = `./public/img/books/${parentId}/`;
-	}
-	let imagePath = imageFolder + imageRecord?.hash;
-
-	*/
-
-	let imgUrl = ''
-	switch(imageType){
-		case 'author':
-			imgUrl = '/img/authors/'+parentId+'/'+imageRecord?.hash;
-		break;
-		case 'book':
-			imgUrl = '/img/books/'+parentId+'/'+imageRecord?.hash;
-		break;
-	}
-	const [photo, setPhoto] = useState(imageRecord?.hash);
-    const [photoObjectURL, setPhotoObjectURL] = useState(imgUrl);
-	const [imageId, setImageId] = useState(imageRecord?.id);
-	const [spinner,setSpinner] = useState(false);
-
-	const uploadPhoto = async (event) => {
-		
-		const body = new FormData();
-		body.append("file", event.target.files[0]);
-		
+	const upload = async (event) => {
+		const file = event.target.files?.[0];
+		if (!file) return;
 		setSpinner(true);
-		const response = await fetch("/api/file", {
-		  method: "POST",
-		  body:body
+		const body = new FormData();
+		body.append("file", file);
+		body.append("_payload", JSON.stringify({ alt: file.name }));
+		const res = await fetch("/payload-api/media", {
+			method: "POST",
+			body,
+			credentials: "include",
 		});
-
-		
-		const data = await response.json();
+		const data = await res.json();
 		setSpinner(false);
-		setImageId(data.id)
-
-
-		if (event.target.files && event.target.files[0]) {
-			const i = event.target.files[0];
-			setPhoto(i);
-			setPhotoObjectURL(URL.createObjectURL(i));
-		  }
-
+		setMediaId(data?.doc?.id || "");
+		setPreview(URL.createObjectURL(file));
 	};
 
-	async function handleDelete(e) {
-		setPhoto(null);
-		//setPhotoObjectURL(null);
-		setImageId('')
-		const response = await fetch("/api/file", {
-			method: "DELETE",
-			headers: {
-				'Content-Type': 'application/json',
-			  },
-			  body: JSON.stringify({ id:imageId }),
-		});
+	const clear = (e) => {
+		e.preventDefault();
+		setMediaId("");
+		setPreview(null);
+	};
 
-		e.target.value = '';
-	}
-	
 	return (
 		<>
-			<input className="form-input block w-full focus:bg-white" id={name} name={name} value={imageId} type="hidden"/>
-			<input className="form-input block w-full focus:bg-white" id="file" name="file" type="file" onChange={uploadPhoto} />
+			<input id={name} name={name} value={mediaId} type="hidden" readOnly />
+			<input className="form-input block w-full focus:bg-white" type="file" accept="image/*" onChange={upload} />
 			{spinner && <span className="spinner"></span>}
-			{(photo && photo != 'undefined') && (
+			{preview && (
 				<div className="flex my-2 items-center ">
-					<Image
-                    src={photoObjectURL}
-                    className="h-full w-1/3 object-cover"
-                    width={200}
-                    height={100}
-                    sizes="100vw"
-                    alt={imageType}
-                />
-					<button className="w-8 h-8 mx-2 border-2 align-middle self-auto aspect-square shadow-lg font-bold px-2 rounded-full text-gray-600 hover:bg-rojo hover:text-white" onClick={handleDelete}>x</button>
+					{/* eslint-disable-next-line @next/next/no-img-element */}
+					<img src={preview} className="h-auto w-1/3 object-cover" alt={name} />
+					<button
+						type="button"
+						className="w-8 h-8 mx-2 border-2 align-middle self-auto aspect-square shadow-lg font-bold px-2 rounded-full text-gray-600 hover:bg-rojo hover:text-white"
+						onClick={clear}
+					>
+						x
+					</button>
 				</div>
 			)}
-								
 		</>
 	);
 }
