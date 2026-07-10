@@ -57,6 +57,14 @@ export default buildConfig({
         queue: 'default',
         limit: 5,
       },
+      {
+        // PDF page extraction runs on its own queue with limit 1: pdf-to-img /
+        // pdfjs shares state in-process and corrupts renders when two books
+        // extract concurrently, so these jobs must run one at a time.
+        cron: '* * * * *',
+        queue: 'pdf-extract',
+        limit: 1,
+      },
     ],
   },
   secret: process.env.PAYLOAD_SECRET || '',

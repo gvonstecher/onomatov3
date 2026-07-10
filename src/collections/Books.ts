@@ -22,6 +22,7 @@ export const Books: CollectionConfig = {
           await req.payload.jobs.queue({
             task: 'extractBookPages',
             input: { bookId: doc.id },
+            queue: 'pdf-extract',
           })
         }
       },
