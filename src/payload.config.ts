@@ -20,6 +20,7 @@ import { Orders } from './collections/Orders'
 import { Payments } from './collections/Payments'
 import { Pages } from './collections/Pages'
 import { extractBookPages } from './jobs/extractBookPages'
+import { PaymentSettings } from './globals/PaymentSettings'
 
 const filename = fileURLToPath(import.meta.url)
 const dirname = path.dirname(filename)
@@ -44,6 +45,7 @@ export default buildConfig({
     Pages,
     Users,
   ],
+  globals: [PaymentSettings],
   editor: lexicalEditor(),
   // Background jobs. `extractBookPages` renders a book's PDF into page images.
   // In dev, autoRun polls the queue every minute so uploads get processed

@@ -1,13 +1,13 @@
 import type { CollectionConfig } from 'payload'
 
-// Maps the Prisma `FollowedBook` model. `bought` is the ownership flag set
-// after a confirmed payment; `lastPageRead` tracks reading progress. The old
-// composite PK (id_user + id_book) becomes a regular collection.
+// A user following a book (wishlist / follow). Ownership is NOT stored here —
+// it is derived from a paid Order (single source of truth). Reading progress,
+// if added later, belongs in its own collection.
 export const FollowedBooks: CollectionConfig = {
   slug: 'followed-books',
   admin: {
     group: 'Engagement',
-    defaultColumns: ['user', 'book', 'bought'],
+    defaultColumns: ['user', 'book'],
   },
   indexes: [
     // One follow row per (user, book).
@@ -27,21 +27,6 @@ export const FollowedBooks: CollectionConfig = {
       relationTo: 'books',
       required: true,
       index: true,
-    },
-    {
-      name: 'order',
-      type: 'relationship',
-      relationTo: 'orders',
-    },
-    {
-      name: 'bought',
-      type: 'checkbox',
-      defaultValue: false,
-    },
-    {
-      name: 'lastPageRead',
-      type: 'number',
-      defaultValue: 0,
     },
   ],
 }

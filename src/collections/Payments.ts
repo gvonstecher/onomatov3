@@ -1,12 +1,11 @@
 import type { CollectionConfig } from 'payload'
 
-// Maps the Prisma `Payment` model. `mercadopagoPaymentId` was a BigInt unique
-// in Prisma; stored here as text to avoid JS number-precision loss on large ids.
+// A payment against an order, provider-agnostic. Amount in integer cents.
 export const Payments: CollectionConfig = {
   slug: 'payments',
   admin: {
     group: 'Commerce',
-    defaultColumns: ['order', 'status', 'amount', 'date'],
+    defaultColumns: ['order', 'provider', 'status', 'amount', 'date'],
   },
   fields: [
     {
@@ -17,22 +16,32 @@ export const Payments: CollectionConfig = {
       index: true,
     },
     {
-      name: 'amount',
-      type: 'number',
+      name: 'provider',
+      type: 'select',
+      options: ['mercadopago', 'paypal'],
+      required: true,
     },
     {
-      name: 'currencyId',
-      type: 'text',
-    },
-    {
-      name: 'mercadopagoPaymentId',
+      // The gateway's payment id. Text (gateway ids can exceed JS-safe ints).
+      name: 'providerPaymentId',
       type: 'text',
       unique: true,
       index: true,
     },
     {
-      name: 'status',
+      name: 'amount',
+      type: 'number',
+      admin: { description: 'Amount, in cents.' },
+    },
+    {
+      name: 'currencyId',
       type: 'text',
+      defaultValue: 'ARS',
+    },
+    {
+      name: 'status',
+      type: 'select',
+      options: ['approved', 'pending', 'rejected', 'refunded'],
       required: true,
     },
     {

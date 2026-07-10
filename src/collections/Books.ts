@@ -40,6 +40,7 @@ export const Books: CollectionConfig = {
     {
       name: 'price',
       type: 'number',
+      admin: { description: 'Price in cents (e.g. 80000 = $800).' },
     },
     {
       // Last page readable for free (preview). Was `last_free_page` SmallInt.
@@ -74,6 +75,15 @@ export const Books: CollectionConfig = {
           options: ['autor completo', 'guionista', 'dibujante', 'entintador', 'colorista', 'letrista'],
         },
       ],
+    },
+    {
+      // Ownership: the author account that uploaded the book and receives the
+      // payout (the marketplace split goes to this account). Distinct from
+      // `credits` (attribution). A future label/publisher would go here too.
+      name: 'owner',
+      type: 'relationship',
+      relationTo: 'authors',
+      required: true,
     },
     {
       name: 'cover',

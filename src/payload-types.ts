@@ -113,8 +113,12 @@ export interface Config {
     defaultIDType: number;
   };
   fallbackLocale: null;
-  globals: {};
-  globalsSelect: {};
+  globals: {
+    'payment-settings': PaymentSetting;
+  };
+  globalsSelect: {
+    'payment-settings': PaymentSettingsSelect<false> | PaymentSettingsSelect<true>;
+  };
   locale: null;
   widgets: {
     collections: CollectionsWidget;
@@ -247,6 +251,13 @@ export interface Author {
         id?: string | null;
       }[]
     | null;
+  payoutAccounts?:
+    | {
+        provider: 'mercadopago' | 'paypal';
+        accountId: string;
+        id?: string | null;
+      }[]
+    | null;
   updatedAt: string;
   createdAt: string;
 }
@@ -299,6 +310,9 @@ export interface Book {
     };
     [k: string]: unknown;
   } | null;
+  /**
+   * Price in cents (e.g. 80000 = $800).
+   */
   price?: number | null;
   lastFreePage?: number | null;
   slug?: string | null;
@@ -309,6 +323,7 @@ export interface Book {
         id?: string | null;
       }[]
     | null;
+  owner: number | Author;
   cover?: (number | null) | Media;
   pdf?: (number | null) | BookFile;
   tags?: (number | Tag)[] | null;
@@ -375,9 +390,6 @@ export interface FollowedBook {
   id: number;
   user: number | User;
   book: number | Book;
-  order?: (number | null) | Order;
-  bought?: boolean | null;
-  lastPageRead?: number | null;
   updatedAt: string;
   createdAt: string;
 }
@@ -387,12 +399,24 @@ export interface FollowedBook {
  */
 export interface Order {
   id: number;
-  status?: ('pending' | 'paid' | 'cancelled') | null;
+  status?: ('pending' | 'paid' | 'cancelled' | 'refunded') | null;
   user: number | User;
   book: number | Book;
-  price?: number | null;
+  /**
+   * Total charged, in cents.
+   */
+  grossAmount?: number | null;
+  /**
+   * Platform commission, in cents.
+   */
+  platformFee?: number | null;
+  /**
+   * Paid directly to the book owner, in cents.
+   */
+  authorAmount?: number | null;
   currencyId?: string | null;
-  mercadopagoId?: string | null;
+  provider?: ('mercadopago' | 'paypal') | null;
+  providerReference?: string | null;
   updatedAt: string;
   createdAt: string;
 }
@@ -403,10 +427,14 @@ export interface Order {
 export interface Payment {
   id: number;
   order: number | Order;
+  provider: 'mercadopago' | 'paypal';
+  providerPaymentId?: string | null;
+  /**
+   * Amount, in cents.
+   */
   amount?: number | null;
   currencyId?: string | null;
-  mercadopagoPaymentId?: string | null;
-  status: string;
+  status: 'approved' | 'pending' | 'rejected' | 'refunded';
   date?: string | null;
   updatedAt: string;
   createdAt: string;
@@ -800,6 +828,13 @@ export interface AuthorsSelect<T extends boolean = true> {
         url?: T;
         id?: T;
       };
+  payoutAccounts?:
+    | T
+    | {
+        provider?: T;
+        accountId?: T;
+        id?: T;
+      };
   updatedAt?: T;
   createdAt?: T;
 }
@@ -820,6 +855,7 @@ export interface BooksSelect<T extends boolean = true> {
         role?: T;
         id?: T;
       };
+  owner?: T;
   cover?: T;
   pdf?: T;
   tags?: T;
@@ -881,9 +917,6 @@ export interface FollowedAuthorsSelect<T extends boolean = true> {
 export interface FollowedBooksSelect<T extends boolean = true> {
   user?: T;
   book?: T;
-  order?: T;
-  bought?: T;
-  lastPageRead?: T;
   updatedAt?: T;
   createdAt?: T;
 }
@@ -895,9 +928,12 @@ export interface OrdersSelect<T extends boolean = true> {
   status?: T;
   user?: T;
   book?: T;
-  price?: T;
+  grossAmount?: T;
+  platformFee?: T;
+  authorAmount?: T;
   currencyId?: T;
-  mercadopagoId?: T;
+  provider?: T;
+  providerReference?: T;
   updatedAt?: T;
   createdAt?: T;
 }
@@ -907,9 +943,10 @@ export interface OrdersSelect<T extends boolean = true> {
  */
 export interface PaymentsSelect<T extends boolean = true> {
   order?: T;
+  provider?: T;
+  providerPaymentId?: T;
   amount?: T;
   currencyId?: T;
-  mercadopagoPaymentId?: T;
   status?: T;
   date?: T;
   updatedAt?: T;
@@ -1088,6 +1125,29 @@ export interface PayloadMigrationsSelect<T extends boolean = true> {
   batch?: T;
   updatedAt?: T;
   createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "payment-settings".
+ */
+export interface PaymentSetting {
+  id: number;
+  /**
+   * Platform commission taken from each sale (percent).
+   */
+  commissionPercent: number;
+  updatedAt?: string | null;
+  createdAt?: string | null;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "payment-settings_select".
+ */
+export interface PaymentSettingsSelect<T extends boolean = true> {
+  commissionPercent?: T;
+  updatedAt?: T;
+  createdAt?: T;
+  globalType?: T;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema

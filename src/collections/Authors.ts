@@ -62,5 +62,25 @@ export const Authors: CollectionConfig = {
         },
       ],
     },
+    {
+      // Where this author gets paid, per gateway. Used for the marketplace
+      // direct split (the payout goes straight to their gateway account).
+      name: 'payoutAccounts',
+      type: 'array',
+      labels: { singular: 'Cuenta de cobro', plural: 'Cuentas de cobro' },
+      fields: [
+        {
+          name: 'provider',
+          type: 'select',
+          options: ['mercadopago', 'paypal'],
+          required: true,
+        },
+        {
+          name: 'accountId',
+          type: 'text',
+          required: true,
+        },
+      ],
+    },
   ],
 }

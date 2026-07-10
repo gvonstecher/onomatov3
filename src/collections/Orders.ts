@@ -1,18 +1,20 @@
 import type { CollectionConfig } from 'payload'
 
-// Maps the Prisma `Order` model. A pay-per-book order linked to MercadoPago.
-// `createdAt` is added automatically by Payload.
+// A pay-per-book order. Provider-agnostic (MercadoPago today, PayPal later).
+// Money is stored in integer cents. The sale is split at the gateway: the
+// platform keeps `platformFee` and the book owner receives `authorAmount`
+// directly to their account (marketplace split), so we hold no author money.
 export const Orders: CollectionConfig = {
   slug: 'orders',
   admin: {
     group: 'Commerce',
-    defaultColumns: ['user', 'book', 'status', 'price'],
+    defaultColumns: ['user', 'book', 'status', 'grossAmount'],
   },
   fields: [
     {
       name: 'status',
       type: 'select',
-      options: ['pending', 'paid', 'cancelled'],
+      options: ['pending', 'paid', 'cancelled', 'refunded'],
       defaultValue: 'pending',
     },
     {
@@ -30,16 +32,33 @@ export const Orders: CollectionConfig = {
       index: true,
     },
     {
-      name: 'price',
+      name: 'grossAmount',
       type: 'number',
+      admin: { description: 'Total charged, in cents.' },
+    },
+    {
+      name: 'platformFee',
+      type: 'number',
+      admin: { description: 'Platform commission, in cents.' },
+    },
+    {
+      name: 'authorAmount',
+      type: 'number',
+      admin: { description: 'Paid directly to the book owner, in cents.' },
     },
     {
       name: 'currencyId',
       type: 'text',
+      defaultValue: 'ARS',
     },
     {
-      // MercadoPago preference/order id.
-      name: 'mercadopagoId',
+      name: 'provider',
+      type: 'select',
+      options: ['mercadopago', 'paypal'],
+    },
+    {
+      // The gateway's order/preference reference for this order.
+      name: 'providerReference',
       type: 'text',
     },
   ],
