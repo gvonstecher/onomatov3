@@ -35,7 +35,7 @@ export const BookPages: CollectionConfig = {
       // extraction job. Not uploaded by hand.
       name: 'image',
       type: 'upload',
-      relationTo: 'media',
+      relationTo: 'page-images',
     },
   ],
 }

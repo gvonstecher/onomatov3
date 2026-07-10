@@ -7,6 +7,7 @@ import sharp from 'sharp'
 
 import { Users } from './collections/Users'
 import { Media } from './collections/Media'
+import { PageImages } from './collections/PageImages'
 import { Tags } from './collections/Tags'
 import { Authors } from './collections/Authors'
 import { Books } from './collections/Books'
@@ -29,6 +30,7 @@ export default buildConfig({
   },
   collections: [
     Media,
+    PageImages,
     Tags,
     Authors,
     Books,

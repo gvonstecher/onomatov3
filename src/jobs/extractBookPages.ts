@@ -59,9 +59,9 @@ export const extractBookPages: TaskConfig<'extractBookPages'> = {
     for (const doc of existingPages.docs) {
       if (doc.image) {
         try {
-          await payload.delete({ collection: 'media', id: doc.image })
+          await payload.delete({ collection: 'page-images', id: doc.image })
         } catch (err) {
-          payload.logger.error(`extractBookPages: could not delete old media ${doc.image}: ${err}`)
+          payload.logger.error(`extractBookPages: could not delete old page image ${doc.image}: ${err}`)
         }
       }
     }
@@ -70,7 +70,6 @@ export const extractBookPages: TaskConfig<'extractBookPages'> = {
     const total = document.length
 
     let pages = 0
-    let firstPageMediaId: number | string | undefined
 
     // Index-based loop with per-page isolation: a page that fails to render or
     // store is logged and skipped, so one bad page can't kill the whole book
@@ -87,9 +86,9 @@ export const extractBookPages: TaskConfig<'extractBookPages'> = {
       try {
         const webp = await sharp(pngBuffer).webp({ quality: 82 }).toBuffer()
 
-        const media = await payload.create({
-          collection: 'media',
-          data: { alt: `${book.title ?? 'Libro'} - página ${n}` },
+        const image = await payload.create({
+          collection: 'page-images',
+          data: {},
           file: {
             data: webp,
             name: `book-${bookId}-page-${String(n).padStart(4, '0')}.webp`,
@@ -98,25 +97,14 @@ export const extractBookPages: TaskConfig<'extractBookPages'> = {
           },
         })
 
-        if (n === 1) firstPageMediaId = media.id
-
         await payload.create({
           collection: 'book-pages',
-          data: { book: bookId, pageNumber: n, image: media.id },
+          data: { book: bookId, pageNumber: n, image: image.id },
         })
         pages += 1
       } catch (err) {
         payload.logger.error(`extractBookPages: skipping page ${n}/${total} of book ${bookId} (store failed): ${err}`)
       }
-    }
-
-    // Auto-set the cover from page 1 if the book doesn't have one yet.
-    if (firstPageMediaId && !book.cover) {
-      await payload.update({
-        collection: 'books',
-        id: bookId,
-        data: { cover: firstPageMediaId },
-      })
     }
 
     return { output: { pages, total } }

@@ -42,6 +42,7 @@ next-env.d.ts
 # payload upload dirs (runtime binaries, not source)
 /media
 /uploads
+/page-images
 
 # playwright mcp artifacts
 /.playwright-mcp
