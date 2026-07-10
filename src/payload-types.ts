@@ -67,7 +67,6 @@ export interface Config {
   };
   blocks: {};
   collections: {
-    users: User;
     media: Media;
     tags: Tag;
     authors: Author;
@@ -79,6 +78,8 @@ export interface Config {
     'followed-books': FollowedBook;
     orders: Order;
     payments: Payment;
+    pages: Page;
+    users: User;
     'payload-kv': PayloadKv;
     'payload-jobs': PayloadJob;
     'payload-locked-documents': PayloadLockedDocument;
@@ -87,7 +88,6 @@ export interface Config {
   };
   collectionsJoins: {};
   collectionsSelect: {
-    users: UsersSelect<false> | UsersSelect<true>;
     media: MediaSelect<false> | MediaSelect<true>;
     tags: TagsSelect<false> | TagsSelect<true>;
     authors: AuthorsSelect<false> | AuthorsSelect<true>;
@@ -99,6 +99,8 @@ export interface Config {
     'followed-books': FollowedBooksSelect<false> | FollowedBooksSelect<true>;
     orders: OrdersSelect<false> | OrdersSelect<true>;
     payments: PaymentsSelect<false> | PaymentsSelect<true>;
+    pages: PagesSelect<false> | PagesSelect<true>;
+    users: UsersSelect<false> | UsersSelect<true>;
     'payload-kv': PayloadKvSelect<false> | PayloadKvSelect<true>;
     'payload-jobs': PayloadJobsSelect<false> | PayloadJobsSelect<true>;
     'payload-locked-documents': PayloadLockedDocumentsSelect<false> | PayloadLockedDocumentsSelect<true>;
@@ -144,32 +146,6 @@ export interface UserAuthOperations {
     email: string;
     password: string;
   };
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "users".
- */
-export interface User {
-  id: number;
-  name?: string | null;
-  updatedAt: string;
-  createdAt: string;
-  email: string;
-  resetPasswordToken?: string | null;
-  resetPasswordExpiration?: string | null;
-  salt?: string | null;
-  hash?: string | null;
-  loginAttempts?: number | null;
-  lockUntil?: string | null;
-  sessions?:
-    | {
-        id: string;
-        createdAt?: string | null;
-        expiresAt: string;
-      }[]
-    | null;
-  password?: string | null;
-  collection: 'users';
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -253,6 +229,32 @@ export interface Author {
     | null;
   updatedAt: string;
   createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "users".
+ */
+export interface User {
+  id: number;
+  name?: string | null;
+  updatedAt: string;
+  createdAt: string;
+  email: string;
+  resetPasswordToken?: string | null;
+  resetPasswordExpiration?: string | null;
+  salt?: string | null;
+  hash?: string | null;
+  loginAttempts?: number | null;
+  lockUntil?: string | null;
+  sessions?:
+    | {
+        id: string;
+        createdAt?: string | null;
+        expiresAt: string;
+      }[]
+    | null;
+  password?: string | null;
+  collection: 'users';
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -384,6 +386,95 @@ export interface Payment {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "pages".
+ */
+export interface Page {
+  id: number;
+  title?: string | null;
+  slug?: string | null;
+  layout?:
+    | (
+        | {
+            slides?:
+              | {
+                  title?: {
+                    tag?: ('h1' | 'h2' | 'h3' | 'h4' | 'h5' | 'h6') | null;
+                    text?: string | null;
+                  };
+                  description?: string | null;
+                  /**
+                   * Desktop background (recommended 1920x1080)
+                   */
+                  backgroundImage?: (number | null) | Media;
+                  /**
+                   * Falls back to the desktop image if empty
+                   */
+                  mobileBackgroundImage?: (number | null) | Media;
+                  /**
+                   * 0 = transparent, 100 = fully opaque
+                   */
+                  backgroundOverlayOpacity?: number | null;
+                  primaryButton?: {
+                    label?: string | null;
+                    url?: string | null;
+                    newTab?: boolean | null;
+                  };
+                  secondaryButton?: {
+                    label?: string | null;
+                    url?: string | null;
+                    newTab?: boolean | null;
+                  };
+                  id?: string | null;
+                }[]
+              | null;
+            id?: string | null;
+            blockName?: string | null;
+            blockType: 'heroV2';
+          }
+        | {
+            heading?: {
+              tag?: ('h1' | 'h2' | 'h3' | 'h4' | 'h5' | 'h6') | null;
+              text?: string | null;
+            };
+            /**
+             * Displays above the main heading
+             */
+            subheading?: string | null;
+            description?: string | null;
+            viewAllButton?: {
+              label?: string | null;
+              url?: string | null;
+              newTab?: boolean | null;
+            };
+            sliderHeading?: string | null;
+            backgroundVisual?: (number | null) | Media;
+            backgroundVisualMobile?: (number | null) | Media;
+            brandSvg?: (number | null) | Media;
+            /**
+             * How many cards to display
+             */
+            productsToShow?: number | null;
+            /**
+             * On = auto-pick by criteria; off = choose manually
+             */
+            automaticSelection?: boolean | null;
+            selectedBooks?: (number | Book)[] | null;
+            selectionType?: ('new_releases' | 'trending_now' | 'best_sellers') | null;
+            /**
+             * Position when multiple reels are stacked
+             */
+            blockPosition?: ('default' | 'first' | 'last') | null;
+            id?: string | null;
+            blockName?: string | null;
+            blockType: 'productReel';
+          }
+      )[]
+    | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "payload-kv".
  */
 export interface PayloadKv {
@@ -499,10 +590,6 @@ export interface PayloadLockedDocument {
   id: number;
   document?:
     | ({
-        relationTo: 'users';
-        value: number | User;
-      } | null)
-    | ({
         relationTo: 'media';
         value: number | Media;
       } | null)
@@ -545,6 +632,14 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'payments';
         value: number | Payment;
+      } | null)
+    | ({
+        relationTo: 'pages';
+        value: number | Page;
+      } | null)
+    | ({
+        relationTo: 'users';
+        value: number | User;
       } | null);
   globalSlug?: string | null;
   user: {
@@ -587,29 +682,6 @@ export interface PayloadMigration {
   batch?: number | null;
   updatedAt: string;
   createdAt: string;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "users_select".
- */
-export interface UsersSelect<T extends boolean = true> {
-  name?: T;
-  updatedAt?: T;
-  createdAt?: T;
-  email?: T;
-  resetPasswordToken?: T;
-  resetPasswordExpiration?: T;
-  salt?: T;
-  hash?: T;
-  loginAttempts?: T;
-  lockUntil?: T;
-  sessions?:
-    | T
-    | {
-        id?: T;
-        createdAt?: T;
-        expiresAt?: T;
-      };
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -788,6 +860,108 @@ export interface PaymentsSelect<T extends boolean = true> {
   date?: T;
   updatedAt?: T;
   createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "pages_select".
+ */
+export interface PagesSelect<T extends boolean = true> {
+  title?: T;
+  slug?: T;
+  layout?:
+    | T
+    | {
+        heroV2?:
+          | T
+          | {
+              slides?:
+                | T
+                | {
+                    title?:
+                      | T
+                      | {
+                          tag?: T;
+                          text?: T;
+                        };
+                    description?: T;
+                    backgroundImage?: T;
+                    mobileBackgroundImage?: T;
+                    backgroundOverlayOpacity?: T;
+                    primaryButton?:
+                      | T
+                      | {
+                          label?: T;
+                          url?: T;
+                          newTab?: T;
+                        };
+                    secondaryButton?:
+                      | T
+                      | {
+                          label?: T;
+                          url?: T;
+                          newTab?: T;
+                        };
+                    id?: T;
+                  };
+              id?: T;
+              blockName?: T;
+            };
+        productReel?:
+          | T
+          | {
+              heading?:
+                | T
+                | {
+                    tag?: T;
+                    text?: T;
+                  };
+              subheading?: T;
+              description?: T;
+              viewAllButton?:
+                | T
+                | {
+                    label?: T;
+                    url?: T;
+                    newTab?: T;
+                  };
+              sliderHeading?: T;
+              backgroundVisual?: T;
+              backgroundVisualMobile?: T;
+              brandSvg?: T;
+              productsToShow?: T;
+              automaticSelection?: T;
+              selectedBooks?: T;
+              selectionType?: T;
+              blockPosition?: T;
+              id?: T;
+              blockName?: T;
+            };
+      };
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "users_select".
+ */
+export interface UsersSelect<T extends boolean = true> {
+  name?: T;
+  updatedAt?: T;
+  createdAt?: T;
+  email?: T;
+  resetPasswordToken?: T;
+  resetPasswordExpiration?: T;
+  salt?: T;
+  hash?: T;
+  loginAttempts?: T;
+  lockUntil?: T;
+  sessions?:
+    | T
+    | {
+        id?: T;
+        createdAt?: T;
+        expiresAt?: T;
+      };
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema

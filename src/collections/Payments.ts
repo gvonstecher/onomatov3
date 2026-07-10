@@ -5,6 +5,7 @@ import type { CollectionConfig } from 'payload'
 export const Payments: CollectionConfig = {
   slug: 'payments',
   admin: {
+    group: 'Commerce',
     defaultColumns: ['order', 'status', 'amount', 'date'],
   },
   fields: [

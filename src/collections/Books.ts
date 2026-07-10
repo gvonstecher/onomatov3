@@ -9,6 +9,7 @@ export const Books: CollectionConfig = {
     read: () => true,
   },
   admin: {
+    group: 'Catalog',
     useAsTitle: 'title',
   },
   hooks: {

@@ -9,6 +9,7 @@ export const Media: CollectionConfig = {
     read: () => true,
   },
   admin: {
+    group: 'Content',
     useAsTitle: 'alt',
   },
   upload: {

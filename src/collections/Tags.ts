@@ -8,6 +8,7 @@ export const Tags: CollectionConfig = {
     read: () => true,
   },
   admin: {
+    group: 'Catalog',
     useAsTitle: 'name',
   },
   fields: [

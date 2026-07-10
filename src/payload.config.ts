@@ -17,6 +17,7 @@ import { FollowedAuthors } from './collections/FollowedAuthors'
 import { FollowedBooks } from './collections/FollowedBooks'
 import { Orders } from './collections/Orders'
 import { Payments } from './collections/Payments'
+import { Pages } from './collections/Pages'
 import { extractBookPages } from './jobs/extractBookPages'
 
 const filename = fileURLToPath(import.meta.url)
@@ -27,7 +28,6 @@ export default buildConfig({
     user: Users.slug,
   },
   collections: [
-    Users,
     Media,
     Tags,
     Authors,
@@ -39,6 +39,8 @@ export default buildConfig({
     FollowedBooks,
     Orders,
     Payments,
+    Pages,
+    Users,
   ],
   editor: lexicalEditor(),
   // Background jobs. `extractBookPages` renders a book's PDF into page images.

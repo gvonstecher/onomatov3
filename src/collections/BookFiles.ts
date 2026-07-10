@@ -14,6 +14,9 @@ export const bookFilesDir = path.resolve(dirname, '../../uploads/book-files')
 // different access rules than the public page previews.
 export const BookFiles: CollectionConfig = {
   slug: 'book-files',
+  admin: {
+    group: 'Catalog',
+  },
   access: {
     // Placeholder: only authenticated users. Real gating (only buyers of the
     // related book) comes when we wire purchase-based access control.

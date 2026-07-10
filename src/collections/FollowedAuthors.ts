@@ -6,6 +6,7 @@ import type { CollectionConfig } from 'payload'
 export const FollowedAuthors: CollectionConfig = {
   slug: 'followed-authors',
   admin: {
+    group: 'Engagement',
     defaultColumns: ['user', 'author'],
   },
   fields: [

@@ -11,6 +11,7 @@ export const Authors: CollectionConfig = {
     read: () => true,
   },
   admin: {
+    group: 'Catalog',
     useAsTitle: 'name',
   },
   fields: [

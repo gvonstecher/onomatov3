@@ -4,6 +4,7 @@ import type { CollectionConfig } from 'payload'
 export const BookVotes: CollectionConfig = {
   slug: 'book-votes',
   admin: {
+    group: 'Engagement',
     defaultColumns: ['user', 'book', 'createdAt'],
   },
   fields: [

@@ -9,6 +9,7 @@ export const BookPages: CollectionConfig = {
     read: () => true,
   },
   admin: {
+    group: 'Catalog',
     useAsTitle: 'pageNumber',
     defaultColumns: ['book', 'pageNumber'],
   },
