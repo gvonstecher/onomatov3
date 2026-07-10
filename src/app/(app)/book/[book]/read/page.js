@@ -58,7 +58,10 @@ export default async function BookReader({ params }) {
     const book = await getBook(payload, bookSlug);
     if (!book) notFound();
 
-    const bought = await isBought(payload, book.id, session?.user?.id);
+    // admin/editor read the whole book without buying
+    const roles = session?.user?.roles || [];
+    const isStaff = roles.includes("admin") || roles.includes("editor");
+    const bought = isStaff || await isBought(payload, book.id, session?.user?.id);
 
     let bookPages = [];
     let lastPage = null;
@@ -91,11 +94,11 @@ export default async function BookReader({ params }) {
                     <div className="absolute w-full h-2/4 bottom-0 bg-white"></div>
                     <div className="absolute top-2/4 text-center w-full z-10">
                         {session
-                            ? <ComprarBtn book={book} author={book.author} size="big" />
+                            ? <ComprarBtn book={book} author={book.credits?.[0]?.author} size="big" />
                             : (
                                 <>
                                     <LoginBtn texto={'Comprar libro Digital'} />
-                                    <ComprarBtn book={book} author={book.author} size="big" />
+                                    <ComprarBtn book={book} author={book.credits?.[0]?.author} size="big" />
                                 </>
                             )}
                     </div>

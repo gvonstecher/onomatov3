@@ -16,5 +16,18 @@ export const Users: CollectionConfig = {
       name: 'name',
       type: 'text',
     },
+    {
+      // WordPress-style account roles. Access control checks these (e.g. admin
+      // and editor bypass the reader paywall). Only admins can change them.
+      name: 'roles',
+      type: 'select',
+      hasMany: true,
+      defaultValue: ['reader'],
+      options: ['admin', 'editor', 'author', 'reader'],
+      saveToJWT: true,
+      access: {
+        update: ({ req: { user } }) => Boolean(user?.roles?.includes('admin')),
+      },
+    },
   ],
 }

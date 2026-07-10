@@ -51,32 +51,47 @@ export const extractBookPages: TaskConfig<'extractBookPages'> = {
     await payload.delete({ collection: 'book-pages', where: { book: { equals: bookId } } })
 
     const document = await pdf(buffer, { scale: 3 })
+    const total = document.length
 
-    let pageNumber = 0
+    let pages = 0
     let firstPageMediaId: number | string | undefined
 
-    for await (const pngBuffer of document) {
-      pageNumber += 1
+    // Index-based loop with per-page isolation: a page that fails to render or
+    // store is logged and skipped, so one bad page can't kill the whole book
+    // (the `for await` iterator would abort the job on the first throw).
+    for (let n = 1; n <= total; n++) {
+      let pngBuffer: Buffer
+      try {
+        pngBuffer = await document.getPage(n)
+      } catch (err) {
+        payload.logger.error(`extractBookPages: skipping page ${n}/${total} of book ${bookId} (render failed): ${err}`)
+        continue
+      }
 
-      const webp = await sharp(pngBuffer).webp({ quality: 82 }).toBuffer()
+      try {
+        const webp = await sharp(pngBuffer).webp({ quality: 82 }).toBuffer()
 
-      const media = await payload.create({
-        collection: 'media',
-        data: { alt: `${book.title ?? 'Libro'} - página ${pageNumber}` },
-        file: {
-          data: webp,
-          name: `book-${bookId}-page-${String(pageNumber).padStart(4, '0')}.webp`,
-          mimetype: 'image/webp',
-          size: webp.length,
-        },
-      })
+        const media = await payload.create({
+          collection: 'media',
+          data: { alt: `${book.title ?? 'Libro'} - página ${n}` },
+          file: {
+            data: webp,
+            name: `book-${bookId}-page-${String(n).padStart(4, '0')}.webp`,
+            mimetype: 'image/webp',
+            size: webp.length,
+          },
+        })
 
-      if (pageNumber === 1) firstPageMediaId = media.id
+        if (n === 1) firstPageMediaId = media.id
 
-      await payload.create({
-        collection: 'book-pages',
-        data: { book: bookId, pageNumber, image: media.id },
-      })
+        await payload.create({
+          collection: 'book-pages',
+          data: { book: bookId, pageNumber: n, image: media.id },
+        })
+        pages += 1
+      } catch (err) {
+        payload.logger.error(`extractBookPages: skipping page ${n}/${total} of book ${bookId} (store failed): ${err}`)
+      }
     }
 
     // Auto-set the cover from page 1 if the book doesn't have one yet.
@@ -88,6 +103,6 @@ export const extractBookPages: TaskConfig<'extractBookPages'> = {
       })
     }
 
-    return { output: { pages: pageNumber } }
+    return { output: { pages, total } }
   },
 }

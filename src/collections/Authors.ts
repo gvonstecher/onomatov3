@@ -30,10 +30,12 @@ export const Authors: CollectionConfig = {
       type: 'richText',
     },
     {
+      // One author profile per user (enforces the 1:1 account↔profile link).
       name: 'user',
       type: 'relationship',
       relationTo: 'users',
       required: true,
+      unique: true,
     },
     {
       name: 'profilePhoto',

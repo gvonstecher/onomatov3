@@ -27,7 +27,7 @@ export const BookList = ({ bookList, title= 'Últimos Títulos', author = true, 
                     />
                     <h4 className="font-bold text-lg leading-5 my-2 line-clamp-3">{book.title}</h4>
                     {author == true && <
-                        h5 className="text-grisClaro line-clamp-2">{book.author?.name}</h5>
+                        h5 className="text-grisClaro line-clamp-2">{(book.credits || []).map((c) => c.author?.name).filter(Boolean).join(', ')}</h5>
                     }
                 </Link>
             </div>

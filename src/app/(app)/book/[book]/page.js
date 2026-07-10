@@ -23,7 +23,7 @@ async function getBook(slug) {
     const res = await payload.find({
         collection: "books",
         where: { slug: { equals: slug } },
-        depth: 1,
+        depth: 2,
         limit: 1,
     });
     return res.docs[0];
@@ -38,7 +38,7 @@ async function getOtherBooks(idAuthor, idBook) {
     const payload = await getPayload({ config });
     const res = await payload.find({
         collection: "books",
-        where: { author: { equals: idAuthor }, id: { not_equals: idBook } },
+        where: { "credits.author": { in: [idAuthor] }, id: { not_equals: idBook } },
         depth: 1,
     });
     return res.docs;
@@ -75,7 +75,9 @@ export default async function Book({params}) {
 
     const book = await getBook(bookSlug);
     if (!book) notFound();
-    const authorId = typeof book.author === "object" ? book.author?.id : book.author;
+    const credits = book.credits || [];
+    const primaryAuthor = credits[0]?.author;
+    const authorId = typeof primaryAuthor === "object" ? primaryAuthor?.id : primaryAuthor;
     const author = await getAuthor(authorId);
     const otherBooks = await getOtherBooks(authorId, book.id);
     let bookFollowed = null;
@@ -113,6 +115,9 @@ export default async function Book({params}) {
                     <article id="mainTitulo" className="flex gap-8 p-4 border-b border-grisClaro items-top">
                         <div className="w-1/2 text-center">
                             <h2 className="text-3xl font-bold">{book.title}</h2>
+                            <p className="text-grisClaro my-2">
+                                {credits.map((c) => `${c.author?.name}${c.role ? ` (${c.role})` : ''}`).filter(Boolean).join(' · ')}
+                            </p>
                             <ul className="text-center my-6">
                                 <li className="inline-block px-2">
                                     <a href={`/book/${bookSlug}/read`} className="">

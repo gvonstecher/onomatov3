@@ -8,7 +8,7 @@ import { AuthorList } from "@/components/author/authorList";
 async function getCatalog() {
 	const payload = await getPayload({ config });
 	const [books, authors] = await Promise.all([
-		payload.find({ collection: "books", depth: 1, limit: 6 }),
+		payload.find({ collection: "books", depth: 2, limit: 6 }),
 		payload.find({ collection: "authors", depth: 1, limit: 6 }),
 	]);
 	return { books: books.docs, authors: authors.docs };

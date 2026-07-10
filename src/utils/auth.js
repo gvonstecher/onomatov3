@@ -9,5 +9,5 @@ export const getAuthSession = async () => {
   const payload = await getPayload({ config });
   const { user } = await payload.auth({ headers: await nextHeaders() });
   if (!user) return null;
-  return { user: { id: user.id, name: user.name, email: user.email } };
+  return { user: { id: user.id, name: user.name, email: user.email, roles: user.roles || [] } };
 };

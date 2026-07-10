@@ -52,7 +52,7 @@ export default async function CreateBook() {
                 description: toRichText(description),
                 price,
                 slug: slugify(title, { lower: true }),
-                author: authorId,
+                credits: [{ author: authorId, role: 'autor completo' }],
                 cover,
                 pdf,
             },

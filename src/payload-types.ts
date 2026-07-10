@@ -237,6 +237,7 @@ export interface Author {
 export interface User {
   id: number;
   name?: string | null;
+  roles?: ('admin' | 'editor' | 'author' | 'reader')[] | null;
   updatedAt: string;
   createdAt: string;
   email: string;
@@ -281,7 +282,13 @@ export interface Book {
   price?: number | null;
   lastFreePage?: number | null;
   slug?: string | null;
-  author: number | Author;
+  credits?:
+    | {
+        author: number | Author;
+        role?: ('autor completo' | 'guionista' | 'dibujante' | 'entintador' | 'colorista' | 'letrista') | null;
+        id?: string | null;
+      }[]
+    | null;
   cover?: (number | null) | Media;
   pdf?: (number | null) | BookFile;
   tags?: (number | Tag)[] | null;
@@ -765,7 +772,13 @@ export interface BooksSelect<T extends boolean = true> {
   price?: T;
   lastFreePage?: T;
   slug?: T;
-  author?: T;
+  credits?:
+    | T
+    | {
+        author?: T;
+        role?: T;
+        id?: T;
+      };
   cover?: T;
   pdf?: T;
   tags?: T;
@@ -946,6 +959,7 @@ export interface PagesSelect<T extends boolean = true> {
  */
 export interface UsersSelect<T extends boolean = true> {
   name?: T;
+  roles?: T;
   updatedAt?: T;
   createdAt?: T;
   email?: T;

@@ -52,10 +52,27 @@ export const Books: CollectionConfig = {
       index: true,
     },
     {
-      name: 'author',
-      type: 'relationship',
-      relationTo: 'authors',
-      required: true,
+      // Creative attribution: one or more authors, each with a role. Covers
+      // "autor completo" (single credit) and "guionista + dibujante" (two).
+      // Kept separate from ownership (a future `publisher`/label account).
+      name: 'credits',
+      type: 'array',
+      minRows: 1,
+      labels: { singular: 'Crédito', plural: 'Créditos' },
+      fields: [
+        {
+          name: 'author',
+          type: 'relationship',
+          relationTo: 'authors',
+          required: true,
+        },
+        {
+          name: 'role',
+          type: 'select',
+          defaultValue: 'autor completo',
+          options: ['autor completo', 'guionista', 'dibujante', 'entintador', 'colorista', 'letrista'],
+        },
+      ],
     },
     {
       name: 'cover',
