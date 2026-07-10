@@ -1,15 +1,14 @@
 import { writeFile } from 'fs/promises'
 import sharp from 'sharp';
 import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from "next-auth/next"
-import { authOptions } from "@/utils/auth";
+import { getAuthSession } from "@/utils/auth";
 import prisma from "@/utils/connect";
 import hash from 'object-hash'
 import fs from 'fs';
 
 export async function POST(req){
 
-    const session = await getServerSession(authOptions);
+    const session = await getAuthSession();
     if(!session){
         return NextResponse.json({ error: 'Not Authorized' },{ status: 401 })
     }

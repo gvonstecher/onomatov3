@@ -3,7 +3,6 @@ import { Inter } from "next/font/google";
 import AuthProvider from "@/providers/AuthProvider";
 import { Footer } from '@/components/layout/footer';
 import { Header } from "@/components/layout/header";
-import { getServerSession } from "next-auth";
 
 import "./globals.css";
 
@@ -16,7 +15,6 @@ export const metadata = {
 };
 
 export default async function RootLayout({ children }) {
-    const session = await getServerSession();
     return (
         <html lang="en">
             <body className="bg-grisBackground m-0">

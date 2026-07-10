@@ -1,15 +1,28 @@
 import Link from "next/link";
 import Image from "next/image";
 
+// Bio can be a plain string (legacy Prisma) or a Lexical richText object
+// (Payload). Flatten either to plain text for display.
+const bioText = (bio) => {
+    if (!bio) return "";
+    if (typeof bio === "string") return bio;
+    const walk = (n) => (n.text || "") + (n.children ? n.children.map(walk).join("") : "");
+    return (bio.root?.children || []).map(walk).join("\n");
+};
+
+// Image can come from Payload uploads (url) or the legacy hashed path.
+const headerSrc = (a) => a.headerPhoto?.url || (a.header_file ? `/img/authors/${a.id}/${a.header_file.hash}` : null);
+const profileSrc = (a) => a.profilePhoto?.url || (a.profile_file ? `/img/authors/${a.id}/${a.profile_file.hash}` : null);
+
 export const Sidebar = ({ author, titulo = "", edit = false }) => (
     <aside className="w-full lg:w-1/5">
         {titulo && (
             <h2 className="font-bold text-xl text-center py-3">{titulo}</h2>
         )}
         <div id="authorBox" className="p-4 border-b border-grisClaro">
-            {author.header_file && (
+            {headerSrc(author) && (
                 <Image
-                    src={`/img/authors/${author.id}/${author.header_file.hash}`}
+                    src={headerSrc(author)}
                     className="h-full w-full object-cover"
                     width={100}
                     height={20}
@@ -17,9 +30,9 @@ export const Sidebar = ({ author, titulo = "", edit = false }) => (
                     alt={author.name}
                 />
             )}
-            {author.profile_file && (
+            {profileSrc(author) && (
                 <Image
-                    src={`/img/authors/${author.id}/${author.profile_file.hash}`}
+                    src={profileSrc(author)}
                     className="aspect-square rounded-full object-cover mx-auto -mt-20"
                     width={130}
                     height={130}
@@ -43,7 +56,7 @@ export const Sidebar = ({ author, titulo = "", edit = false }) => (
                                     {
                                         (() => {
                                             //codigo horrible para usar curly braces
-                                            switch (link.type.toLowerCase()) {
+                                            switch ((link.type || "").toLowerCase()) {
                                                 case "facebook":
                                                     return (
                                                         <svg
@@ -180,7 +193,7 @@ export const Sidebar = ({ author, titulo = "", edit = false }) => (
                     ))}
             </ul>
 
-            <p className="text-justify">{author.bio}</p>
+            <p className="text-justify whitespace-pre-line">{bioText(author.bio)}</p>
             {edit && (
                 <Link
                     href="/dashboard/author/edit"

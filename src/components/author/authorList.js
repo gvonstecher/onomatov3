@@ -15,9 +15,8 @@ export const AuthorList = ({authorList, title= 'Últimos Autores', cols='4' }) =
                 <Link href={`/author/${author.slug}`} className="group">
                         <Image 
                         className="w-full aspect-square rounded-full object-cover transform-all group-hover:transition-all group-hover:scale-110 ease-out duration-300" 
-                        src={ author.profile_file?.hash ? 
-                            `/img/authors/${author.id}/${author.profile_file.hash}`
-                            : `/img/authorDefault.jpg`
+                        src={ author.profilePhoto?.url
+                            || (author.profile_file?.hash ? `/img/authors/${author.id}/${author.profile_file.hash}` : `/img/authorDefault.jpg`)
                         }
                         alt={author.name}
                         width={200}

@@ -1,41 +1,13 @@
-import GithubProvider from "next-auth/providers/github";
-import GoogleProvider from "next-auth/providers/google";
-import { PrismaAdapter } from "@next-auth/prisma-adapter"
-import { PrismaClient } from "@prisma/client"
-import { getServerSession } from "next-auth";
-import prisma from "./connect";
+import { headers as nextHeaders } from "next/headers";
+import { getPayload } from "payload";
+import config from "@payload-config";
 
-export const authOptions = {
-    adapter: PrismaAdapter(prisma),
-    // Configure one or more authentication providers
-    providers: [
-      GithubProvider({
-        clientId: process.env.GITHUB_ID,
-        clientSecret: process.env.GITHUB_SECRET,
-      }),
-      GoogleProvider({
-        clientId: process.env.GOOGLE_ID,
-        clientSecret: process.env.GOOGLE_SECRET
-      }),
-    ],
-    callbacks: {
-      session: async ({ session, token }) => {
-        if (session?.user) {
-          session.user.id = token.uid;
-        }
-        return session;
-      },
-      jwt: async ({ user, token }) => {
-        if (user) {
-          token.uid = user.id;
-        }
-        return token;
-      },
-    },
-    session: {
-      strategy: 'jwt',
-    },
-  }
-
-
-  export const getAuthSession = () => getServerSession(authOptions);
+// Auth is now handled by Payload's native `users` collection (auth: true),
+// replacing NextAuth. getAuthSession reads Payload's session cookie and returns
+// a shape compatible with the previous NextAuth usage: session.user.id/name/email.
+export const getAuthSession = async () => {
+  const payload = await getPayload({ config });
+  const { user } = await payload.auth({ headers: await nextHeaders() });
+  if (!user) return null;
+  return { user: { id: user.id, name: user.name, email: user.email } };
+};

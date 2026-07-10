@@ -1,34 +1,22 @@
 import Image from "next/image";
+import { getPayload } from "payload";
+import config from "@payload-config";
 import { BookList } from "@/components/book/bookList";
 import { AuthorList } from "@/components/author/authorList";
-import prisma from "@/utils/connect";
 
-
-async function getBooks() {
-    const books = await prisma.book.findMany({
-        include: { 
-			author: true,
-			cover_file:true 
-		},
-        take: 6
-    });
-    return books;
-};
-
-async function getAuthors() {
-    const authors = await prisma.author.findMany({
-		include: {
-			profile_file: true
-		},
-        take: 6
-    });
-    return authors;
-};
+// Catalog reads now come from Payload's Local API instead of Prisma.
+async function getCatalog() {
+	const payload = await getPayload({ config });
+	const [books, authors] = await Promise.all([
+		payload.find({ collection: "books", depth: 1, limit: 6 }),
+		payload.find({ collection: "authors", depth: 1, limit: 6 }),
+	]);
+	return { books: books.docs, authors: authors.docs };
+}
 
 export default async function Home() {
 
-	const authors = await getAuthors();
-    const books = await getBooks();
+	const { books, authors } = await getCatalog();
 
 
     return (

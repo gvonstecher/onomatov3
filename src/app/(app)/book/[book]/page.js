@@ -1,5 +1,8 @@
 import Image from "next/image";
 import Link from 'next/link';
+import { notFound } from "next/navigation";
+import { getPayload } from "payload";
+import config from "@payload-config";
 import { getAuthSession } from "@/utils/auth";
 import { Sidebar } from '@/components/layout/authorSidebar';
 import { BookList } from '@/components/book/bookList';
@@ -7,70 +10,60 @@ import ComprarBtn from "@/components/actions/comprarBtn";
 import DescargarBtn from "@/components/actions/descargarBtn";
 import LoginBtn from "@/components/actions/loginBtn";
 
-async function getBook(slug) {
-    const book = await prisma.Book.findFirst({
-        where: {
-            slug: slug,
-        },
-        include:{
-            cover_file:true
-        }
-    });
-    return book;  
+// Flatten a Lexical richText value (Payload) or plain string (legacy) to text.
+const richToText = (v) => {
+    if (!v) return "";
+    if (typeof v === "string") return v;
+    const walk = (n) => (n.text || "") + (n.children ? n.children.map(walk).join("") : "");
+    return (v.root?.children || []).map(walk).join("\n");
 };
+
+async function getBook(slug) {
+    const payload = await getPayload({ config });
+    const res = await payload.find({
+        collection: "books",
+        where: { slug: { equals: slug } },
+        depth: 1,
+        limit: 1,
+    });
+    return res.docs[0];
+}
 
 async function getAuthor(idAuthor) {
-    const author = await prisma.author.findUnique({
-        where: { id: idAuthor},
-        include: { 
-            socialmedias: true,
-            profile_file: true,
-            header_file: true
-        },
-    });
-    return author;
-    
-};
+    const payload = await getPayload({ config });
+    return payload.findByID({ collection: "authors", id: idAuthor, depth: 1 }).catch(() => null);
+}
 
 async function getOtherBooks(idAuthor, idBook) {
-    const otherBooks = await prisma.Book.findFirst({
-        where: {
-            id_author: idAuthor,
-            NOT: {
-                id: idBook
-            }
-        },
-        include:{
-            cover_file:true
-        }
+    const payload = await getPayload({ config });
+    const res = await payload.find({
+        collection: "books",
+        where: { author: { equals: idAuthor }, id: { not_equals: idBook } },
+        depth: 1,
     });
-    return otherBooks;  
-};
+    return res.docs;
+}
 
 async function getBookFollowed(idUser, idBook) {
-    const bookFollowed = await prisma.FollowedBook.findFirst({
-        where: {
-            id_user: idUser,
-            id_book: idBook
-        }
+    const payload = await getPayload({ config });
+    const res = await payload.find({
+        collection: "followed-books",
+        where: { user: { equals: idUser }, book: { equals: idBook } },
+        limit: 1,
     });
-    return bookFollowed;  
-};
+    return res.docs[0] || null;
+}
 
 async function getBookPages(idBook) {
-    const bookFollowed = await prisma.BookPage.findMany({
-        where: {
-            id_book: idBook,
-        },
-        orderBy: {
-            page_number:'asc'
-        },
-        include: {
-            page_file: true
-        }
+    const payload = await getPayload({ config });
+    const res = await payload.find({
+        collection: "book-pages",
+        where: { book: { equals: idBook } },
+        sort: "pageNumber",
+        depth: 1,
     });
-    return bookFollowed;  
-};
+    return res.docs;
+}
 
 
 
@@ -81,31 +74,33 @@ export default async function Book({params}) {
     const bookSlug = (await params).book;
 
     const book = await getBook(bookSlug);
-    const author = await getAuthor(book.id_author, book.id);
-    const otherBooks = await getOtherBooks(book.id_author);
-    let bookFollowed = [] ;
+    if (!book) notFound();
+    const authorId = typeof book.author === "object" ? book.author?.id : book.author;
+    const author = await getAuthor(authorId);
+    const otherBooks = await getOtherBooks(authorId, book.id);
+    let bookFollowed = null;
     let bookPagesUrl = [];
     if(session != null){
         bookFollowed = await getBookFollowed(session.user.id, book.id)
 
         if(bookFollowed?.bought){
-            
-            bookPagesUrl.push(book.cover_file?.hash);
+
+            if (book.cover?.url) bookPagesUrl.push(book.cover.url);
             const bookPages = await getBookPages(book.id);
-            bookPages.map(bookpage => {
-                bookPagesUrl.push(bookpage.page_file.hash);
+            bookPages.forEach((bookpage) => {
+                if (bookpage.image?.url) bookPagesUrl.push(bookpage.image.url);
             });
 
         }
 
-        
+
     }
    
     return (
         <>
             <section id="hero-internal" className="relative">
                 <Image
-					src={`/img/authors/${author.id}/${author.header_file?.hash}`}
+					src={author?.headerPhoto?.url || "/img/heroBig.png"}
 					className="w-full object-cover object-center max-h-80"
                     width={1500}
                     height={150}
@@ -162,14 +157,14 @@ export default async function Book({params}) {
                                 
                             </ul>
 
-                            <p className="text-xl text-justify">
-                            {book.description}
+                            <p className="text-xl text-justify whitespace-pre-line">
+                            {richToText(book.description)}
                             </p>
                         </div>
 
                         <div className="w-1/2 relative">
                             <Image
-                                src={`/img/books/${book.id}/${book.cover_file?.hash}`}
+                                src={book.cover?.url || "/img/bookCover1.png"}
                                 className="w-full h-auto"
                                 alt={book.title}
                                 width={470}

@@ -19,7 +19,7 @@ export const BookList = ({ bookList, title= 'Últimos Títulos', author = true, 
             >
                 <Link href={`/book/${book.slug}`} className="group">
                     <Image
-                    src={`/img/books/${book.id}/${book.cover_file?.hash}`}
+                    src={book.cover?.url || (book.cover_file?.hash ? `/img/books/${book.id}/${book.cover_file.hash}` : "/img/bookCover1.png")}
                     className="w-full aspect-square rounded-md object-contain transform-all group-hover:transition-all group-hover:scale-110 ease-out duration-300"
                     width={250}
                     height={250}
@@ -27,7 +27,7 @@ export const BookList = ({ bookList, title= 'Últimos Títulos', author = true, 
                     />
                     <h4 className="font-bold text-lg leading-5 my-2 line-clamp-3">{book.title}</h4>
                     {author == true && <
-                        h5 className="text-grisClaro line-clamp-2">{book.author.name}</h5> 
+                        h5 className="text-grisClaro line-clamp-2">{book.author?.name}</h5>
                     }
                 </Link>
             </div>

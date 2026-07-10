@@ -3,17 +3,12 @@ import Head from "next/head";
 import Image from "next/image";
 import Link from 'next/link';
 import {redirect} from 'next/navigation';
-import { useSession } from 'next-auth/react'
+import { useSession } from '@/providers/AuthProvider'
 import { useState } from "react";
 
 export default function EditAuthorForm(author) {
 
-    const { data: session } = useSession({
-        required: true,
-        onUnauthenticated() {
-            redirect('/api/auth/signin?callbackUrl=/client')
-        }
-    })
+    const { data: session } = useSession()
 
     
     let imagePath = author.profile_photo ? `/img/users/${author.id}/${author.profile_photo}` : null;
