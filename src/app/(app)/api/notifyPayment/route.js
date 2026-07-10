@@ -6,6 +6,10 @@ mercadopago.configure({
 	access_token: process.env.MERCADO_PAGO_ACCESS_TOKEN,
 });
 
+// Map MercadoPago payment statuses onto our provider-agnostic enum.
+const mapStatus = (s) =>
+	({ approved: 'approved', pending: 'pending', in_process: 'pending', authorized: 'pending', rejected: 'rejected', cancelled: 'rejected', refunded: 'refunded', charged_back: 'refunded' }[s] || 'pending');
+
 export async function POST(req) {
 
 	const searchParams = req.nextUrl.searchParams;
@@ -40,7 +44,7 @@ export async function POST(req) {
 
 			const existing = await payload.find({
 				collection: "payments",
-				where: { mercadopagoPaymentId: { equals: String(payment.id) } },
+				where: { providerPaymentId: { equals: String(payment.id) } },
 				limit: 1,
 			});
 			if (!existing.docs.length) {
@@ -48,41 +52,24 @@ export async function POST(req) {
 					collection: "payments",
 					data: {
 						order: Number(orderId),
-						date: payment.date_created,
-						status: payment.status,
-						amount: payment.transaction_amount,
+						provider: "mercadopago",
+						providerPaymentId: String(payment.id),
+						amount: Math.round(payment.transaction_amount * 100), // -> cents
 						currencyId: payment.currency_id,
-						mercadopagoPaymentId: String(payment.id),
+						status: mapStatus(payment.status),
+						date: payment.date_created,
 					},
 				});
 			}
 		}
 
 		if (paidAmount >= merchantOrder.body.total_amount) {
-			const updateOrder = await payload.update({
+			// Ownership is derived from the paid order — no followed-book flag.
+			await payload.update({
 				collection: "orders",
 				id: Number(orderId),
 				data: { status: 'paid' },
 			});
-
-			// Mark the buyer's followed-book as bought (upsert).
-			const fb = await payload.find({
-				collection: "followed-books",
-				where: { user: { equals: updateOrder.user }, book: { equals: updateOrder.book } },
-				limit: 1,
-			});
-			if (fb.docs[0]) {
-				await payload.update({
-					collection: "followed-books",
-					id: fb.docs[0].id,
-					data: { bought: true, order: updateOrder.id },
-				});
-			} else {
-				await payload.create({
-					collection: "followed-books",
-					data: { user: updateOrder.user, book: updateOrder.book, bought: true, order: updateOrder.id },
-				});
-			}
 		}
 
 		return new Response('ok', { status: 200 });

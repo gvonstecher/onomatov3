@@ -110,7 +110,7 @@ export default function ComprarBtn({ book, author, size='small' }) {
                     </div>
 
                     <div className="mx-6 py-2 border-b">
-                        <p>Comprar <span className="font-bold">{book.title}</span> por <span className="text-xl font-bold">${book.price}</span> <span className="italic">pesos argentinos</span></p>
+                        <p>Comprar <span className="font-bold">{book.title}</span> por <span className="text-xl font-bold">${((book.price || 0) / 100).toLocaleString('es-AR')}</span> <span className="italic">pesos argentinos</span></p>
                     </div>
                     <div className="mx-6 py-2">
                         <p className="text-sm">Incluye la posibilidad de leer el libro en el sitio, como también es descargarlo en formato pdf o cbr</p>

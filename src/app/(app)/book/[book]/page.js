@@ -44,14 +44,16 @@ async function getOtherBooks(idAuthor, idBook) {
     return res.docs;
 }
 
-async function getBookFollowed(idUser, idBook) {
+async function userOwnsBook(idUser, idBook) {
+    if (!idUser) return false;
+    // Ownership is derived from a paid order (single source of truth).
     const payload = await getPayload({ config });
     const res = await payload.find({
-        collection: "followed-books",
-        where: { user: { equals: idUser }, book: { equals: idBook } },
+        collection: "orders",
+        where: { user: { equals: idUser }, book: { equals: idBook }, status: { equals: "paid" } },
         limit: 1,
     });
-    return res.docs[0] || null;
+    return res.docs.length > 0;
 }
 
 async function getBookPages(idBook) {
@@ -80,12 +82,12 @@ export default async function Book({params}) {
     const authorId = typeof primaryAuthor === "object" ? primaryAuthor?.id : primaryAuthor;
     const author = await getAuthor(authorId);
     const otherBooks = await getOtherBooks(authorId, book.id);
-    let bookFollowed = null;
+    let owns = false;
     let bookPagesUrl = [];
     if(session != null){
-        bookFollowed = await getBookFollowed(session.user.id, book.id)
+        owns = await userOwnsBook(session.user.id, book.id)
 
-        if(bookFollowed?.bought){
+        if(owns){
 
             if (book.cover?.url) bookPagesUrl.push(book.cover.url);
             const bookPages = await getBookPages(book.id);
@@ -140,7 +142,7 @@ export default async function Book({params}) {
                                     </a>
                                 </li>
                                 {
-                                    (bookFollowed && bookFollowed.bought)? 
+                                    (owns)?
                                         ( 
                                             <li className="inline-block px-2">
                                                 <DescargarBtn book={book} author={author} bookPages={bookPagesUrl}/>

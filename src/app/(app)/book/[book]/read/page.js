@@ -18,12 +18,13 @@ async function getBook(payload, slug) {
 
 async function isBought(payload, bookId, userId) {
     if (!userId) return false;
+    // Ownership is derived from a paid order (single source of truth).
     const res = await payload.find({
-        collection: "followed-books",
-        where: { book: { equals: bookId }, user: { equals: userId } },
+        collection: "orders",
+        where: { book: { equals: bookId }, user: { equals: userId }, status: { equals: "paid" } },
         limit: 1,
     });
-    return Boolean(res.docs[0]?.bought);
+    return res.docs.length > 0;
 }
 
 async function getPages(payload, bookId, upTo) {

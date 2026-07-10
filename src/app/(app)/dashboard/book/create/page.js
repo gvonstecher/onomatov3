@@ -53,6 +53,7 @@ export default async function CreateBook() {
                 price,
                 slug: slugify(title, { lower: true }),
                 credits: [{ author: authorId, role: 'autor completo' }],
+                owner: authorId,
                 cover,
                 pdf,
             },
