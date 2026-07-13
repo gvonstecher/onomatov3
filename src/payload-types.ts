@@ -87,7 +87,28 @@ export interface Config {
     'payload-preferences': PayloadPreference;
     'payload-migrations': PayloadMigration;
   };
-  collectionsJoins: {};
+  collectionsJoins: {
+    tags: {
+      books: 'books';
+    };
+    authors: {
+      books: 'books';
+      credited: 'books';
+      followers: 'followed-authors';
+    };
+    books: {
+      pages: 'book-pages';
+      followers: 'followed-books';
+      votes: 'book-votes';
+    };
+    orders: {
+      payment: 'payments';
+    };
+    users: {
+      author: 'authors';
+      orders: 'orders';
+    };
+  };
   collectionsSelect: {
     media: MediaSelect<false> | MediaSelect<true>;
     'page-images': PageImagesSelect<false> | PageImagesSelect<true>;
@@ -215,6 +236,68 @@ export interface PageImage {
 export interface Tag {
   id: number;
   name: string;
+  books?: {
+    docs?: (number | Book)[];
+    hasNextPage?: boolean;
+    totalDocs?: number;
+  };
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "books".
+ */
+export interface Book {
+  id: number;
+  title?: string | null;
+  description?: {
+    root: {
+      type: string;
+      children: {
+        type: any;
+        version: number;
+        [k: string]: unknown;
+      }[];
+      direction: ('ltr' | 'rtl') | null;
+      format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
+      indent: number;
+      version: number;
+    };
+    [k: string]: unknown;
+  } | null;
+  /**
+   * Price in cents (e.g. 80000 = $800).
+   */
+  price?: number | null;
+  lastFreePage?: number | null;
+  slug?: string | null;
+  credits?:
+    | {
+        author: number | Author;
+        role?: ('autor completo' | 'guionista' | 'dibujante' | 'entintador' | 'colorista' | 'letrista') | null;
+        id?: string | null;
+      }[]
+    | null;
+  owner: number | Author;
+  cover?: (number | null) | Media;
+  pdf?: (number | null) | BookFile;
+  tags?: (number | Tag)[] | null;
+  pages?: {
+    docs?: (number | BookPage)[];
+    hasNextPage?: boolean;
+    totalDocs?: number;
+  };
+  followers?: {
+    docs?: (number | FollowedBook)[];
+    hasNextPage?: boolean;
+    totalDocs?: number;
+  };
+  votes?: {
+    docs?: (number | BookVote)[];
+    hasNextPage?: boolean;
+    totalDocs?: number;
+  };
   updatedAt: string;
   createdAt: string;
 }
@@ -258,6 +341,21 @@ export interface Author {
         id?: string | null;
       }[]
     | null;
+  books?: {
+    docs?: (number | Book)[];
+    hasNextPage?: boolean;
+    totalDocs?: number;
+  };
+  credited?: {
+    docs?: (number | Book)[];
+    hasNextPage?: boolean;
+    totalDocs?: number;
+  };
+  followers?: {
+    docs?: (number | FollowedAuthor)[];
+    hasNextPage?: boolean;
+    totalDocs?: number;
+  };
   updatedAt: string;
   createdAt: string;
 }
@@ -269,6 +367,16 @@ export interface User {
   id: number;
   name?: string | null;
   roles?: ('admin' | 'editor' | 'author' | 'reader')[] | null;
+  author?: {
+    docs?: (number | Author)[];
+    hasNextPage?: boolean;
+    totalDocs?: number;
+  };
+  orders?: {
+    docs?: (number | Order)[];
+    hasNextPage?: boolean;
+    totalDocs?: number;
+  };
   updatedAt: string;
   createdAt: string;
   email: string;
@@ -290,43 +398,63 @@ export interface User {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "books".
+ * via the `definition` "orders".
  */
-export interface Book {
+export interface Order {
   id: number;
-  title?: string | null;
-  description?: {
-    root: {
-      type: string;
-      children: {
-        type: any;
-        version: number;
-        [k: string]: unknown;
-      }[];
-      direction: ('ltr' | 'rtl') | null;
-      format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
-      indent: number;
-      version: number;
-    };
-    [k: string]: unknown;
-  } | null;
+  status?: ('pending' | 'paid' | 'cancelled' | 'refunded') | null;
+  user: number | User;
+  book: number | Book;
   /**
-   * Price in cents (e.g. 80000 = $800).
+   * Total charged, in cents.
    */
-  price?: number | null;
-  lastFreePage?: number | null;
-  slug?: string | null;
-  credits?:
-    | {
-        author: number | Author;
-        role?: ('autor completo' | 'guionista' | 'dibujante' | 'entintador' | 'colorista' | 'letrista') | null;
-        id?: string | null;
-      }[]
-    | null;
-  owner: number | Author;
-  cover?: (number | null) | Media;
-  pdf?: (number | null) | BookFile;
-  tags?: (number | Tag)[] | null;
+  grossAmount?: number | null;
+  /**
+   * Platform commission, in cents.
+   */
+  platformFee?: number | null;
+  /**
+   * Paid directly to the book owner, in cents.
+   */
+  authorAmount?: number | null;
+  currencyId?: string | null;
+  provider?: ('mercadopago' | 'paypal') | null;
+  providerReference?: string | null;
+  payment?: {
+    docs?: (number | Payment)[];
+    hasNextPage?: boolean;
+    totalDocs?: number;
+  };
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "payments".
+ */
+export interface Payment {
+  id: number;
+  order: number | Order;
+  provider: 'mercadopago' | 'paypal';
+  providerPaymentId?: string | null;
+  /**
+   * Amount, in cents.
+   */
+  amount?: number | null;
+  currencyId?: string | null;
+  status: 'approved' | 'pending' | 'rejected' | 'refunded';
+  date?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "followed-authors".
+ */
+export interface FollowedAuthor {
+  id: number;
+  user: number | User;
+  author: number | Author;
   updatedAt: string;
   createdAt: string;
 }
@@ -362,28 +490,6 @@ export interface BookPage {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "book-votes".
- */
-export interface BookVote {
-  id: number;
-  user: number | User;
-  book: number | Book;
-  updatedAt: string;
-  createdAt: string;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "followed-authors".
- */
-export interface FollowedAuthor {
-  id: number;
-  user: number | User;
-  author: number | Author;
-  updatedAt: string;
-  createdAt: string;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "followed-books".
  */
 export interface FollowedBook {
@@ -395,47 +501,12 @@ export interface FollowedBook {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "orders".
+ * via the `definition` "book-votes".
  */
-export interface Order {
+export interface BookVote {
   id: number;
-  status?: ('pending' | 'paid' | 'cancelled' | 'refunded') | null;
   user: number | User;
   book: number | Book;
-  /**
-   * Total charged, in cents.
-   */
-  grossAmount?: number | null;
-  /**
-   * Platform commission, in cents.
-   */
-  platformFee?: number | null;
-  /**
-   * Paid directly to the book owner, in cents.
-   */
-  authorAmount?: number | null;
-  currencyId?: string | null;
-  provider?: ('mercadopago' | 'paypal') | null;
-  providerReference?: string | null;
-  updatedAt: string;
-  createdAt: string;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "payments".
- */
-export interface Payment {
-  id: number;
-  order: number | Order;
-  provider: 'mercadopago' | 'paypal';
-  providerPaymentId?: string | null;
-  /**
-   * Amount, in cents.
-   */
-  amount?: number | null;
-  currencyId?: string | null;
-  status: 'approved' | 'pending' | 'rejected' | 'refunded';
-  date?: string | null;
   updatedAt: string;
   createdAt: string;
 }
@@ -807,6 +878,7 @@ export interface PageImagesSelect<T extends boolean = true> {
  */
 export interface TagsSelect<T extends boolean = true> {
   name?: T;
+  books?: T;
   updatedAt?: T;
   createdAt?: T;
 }
@@ -835,6 +907,9 @@ export interface AuthorsSelect<T extends boolean = true> {
         accountId?: T;
         id?: T;
       };
+  books?: T;
+  credited?: T;
+  followers?: T;
   updatedAt?: T;
   createdAt?: T;
 }
@@ -859,6 +934,9 @@ export interface BooksSelect<T extends boolean = true> {
   cover?: T;
   pdf?: T;
   tags?: T;
+  pages?: T;
+  followers?: T;
+  votes?: T;
   updatedAt?: T;
   createdAt?: T;
 }
@@ -934,6 +1012,7 @@ export interface OrdersSelect<T extends boolean = true> {
   currencyId?: T;
   provider?: T;
   providerReference?: T;
+  payment?: T;
   updatedAt?: T;
   createdAt?: T;
 }
@@ -1038,6 +1117,8 @@ export interface PagesSelect<T extends boolean = true> {
 export interface UsersSelect<T extends boolean = true> {
   name?: T;
   roles?: T;
+  author?: T;
+  orders?: T;
   updatedAt?: T;
   createdAt?: T;
   email?: T;

@@ -103,5 +103,31 @@ export const Books: CollectionConfig = {
       relationTo: 'tags',
       hasMany: true,
     },
+    // Bidirectional views (virtual — no columns, read the FK on the other side):
+    {
+      // Generated PDF page images (reverse of BookPages.book). Lets the admin
+      // list a book's pages inline instead of the separate Book Pages screen.
+      name: 'pages',
+      type: 'join',
+      collection: 'book-pages',
+      on: 'book',
+      admin: { allowCreate: false, defaultColumns: ['pageNumber', 'image'] },
+    },
+    {
+      // Users following this book (reverse of FollowedBooks.book).
+      name: 'followers',
+      type: 'join',
+      collection: 'followed-books',
+      on: 'book',
+      admin: { allowCreate: false },
+    },
+    {
+      // Votes cast on this book (reverse of BookVotes.book).
+      name: 'votes',
+      type: 'join',
+      collection: 'book-votes',
+      on: 'book',
+      admin: { allowCreate: false },
+    },
   ],
 }

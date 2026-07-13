@@ -17,5 +17,13 @@ export const Tags: CollectionConfig = {
       type: 'text',
       required: true,
     },
+    {
+      // Books carrying this tag (reverse of Books.tags, a hasMany relationship).
+      name: 'books',
+      type: 'join',
+      collection: 'books',
+      on: 'tags',
+      admin: { allowCreate: false },
+    },
   ],
 }

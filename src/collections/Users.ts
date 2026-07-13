@@ -29,5 +29,23 @@ export const Users: CollectionConfig = {
         update: ({ req: { user } }) => Boolean(user?.roles?.includes('admin')),
       },
     },
+    // Bidirectional views (virtual — no columns, read the FK on the other side):
+    {
+      // The author profile linked to this user, if any (reverse of the 1:1
+      // Authors.user). One row max because Authors.user is unique.
+      name: 'author',
+      type: 'join',
+      collection: 'authors',
+      on: 'user',
+      admin: { allowCreate: false },
+    },
+    {
+      // This user's purchases (reverse of Orders.user).
+      name: 'orders',
+      type: 'join',
+      collection: 'orders',
+      on: 'user',
+      admin: { allowCreate: false, defaultColumns: ['book', 'status', 'grossAmount'] },
+    },
   ],
 }

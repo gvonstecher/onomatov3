@@ -82,5 +82,31 @@ export const Authors: CollectionConfig = {
         },
       ],
     },
+    // Bidirectional views (virtual — no columns, read the FK on the other side):
+    {
+      // Books this author owns/uploaded (reverse of Books.owner). Replaces the
+      // manual `find({ where: { owner } })` the author page does today.
+      name: 'books',
+      type: 'join',
+      collection: 'books',
+      on: 'owner',
+    },
+    {
+      // Every book where this author appears in the credits, in any role
+      // (reverse of Books.credits.author — dot notation into the array).
+      name: 'credited',
+      type: 'join',
+      collection: 'books',
+      on: 'credits.author',
+      admin: { allowCreate: false },
+    },
+    {
+      // Users following this author (reverse of FollowedAuthors.author).
+      name: 'followers',
+      type: 'join',
+      collection: 'followed-authors',
+      on: 'author',
+      admin: { allowCreate: false },
+    },
   ],
 }

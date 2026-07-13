@@ -61,5 +61,14 @@ export const Orders: CollectionConfig = {
       name: 'providerReference',
       type: 'text',
     },
+    {
+      // The payment(s) recorded for this order by the webhook (reverse of
+      // Payments.order). Normally one; surfaced inline on the order screen.
+      name: 'payment',
+      type: 'join',
+      collection: 'payments',
+      on: 'order',
+      admin: { allowCreate: false },
+    },
   ],
 }
