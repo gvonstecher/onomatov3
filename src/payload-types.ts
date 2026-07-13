@@ -201,7 +201,7 @@ export interface Media {
       filesize?: number | null;
       filename?: string | null;
     };
-    card?: {
+    medium?: {
       url?: string | null;
       width?: number | null;
       height?: number | null;
@@ -843,7 +843,7 @@ export interface MediaSelect<T extends boolean = true> {
               filesize?: T;
               filename?: T;
             };
-        card?:
+        medium?:
           | T
           | {
               url?: T;

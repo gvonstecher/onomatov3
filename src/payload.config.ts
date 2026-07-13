@@ -28,6 +28,11 @@ const dirname = path.dirname(filename)
 export default buildConfig({
   admin: {
     user: Users.slug,
+    // Resolve custom admin component paths (admin.components.Cell, etc.)
+    // relative to src/, so they can be referenced as '/components/...'.
+    importMap: {
+      baseDir: dirname,
+    },
   },
   collections: [
     Media,
