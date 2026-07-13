@@ -152,7 +152,33 @@ Two real integration issues surfaced and were fixed along the way (see findings)
 - **Pipeline**: chunking/resume for huge books; real access control (PDF download and paid pages only for buyers).
 - **Production render engine**: evaluate swapping `pdf-to-img` for `mupdf` (WASM), which sidesteps the two pdfjs integration issues above.
 
-## 8. Preliminary verdict
+## 8. How Payload compares (for our stack)
+
+Framed from our lens: block-based editable content (our ACF Flexible Content workflow), self-hosted vs SaaS, decoupled/headless, and stack modernity. Compared against what we already use (WordPress + ACF) and what we've tried (Strapi, Storyblok). Architecture/workflow fit only — pricing tiers change often and should be verified separately.
+
+| Dimension | WordPress + ACF | Strapi | Storyblok | Payload |
+|-----------|-----------------|--------|-----------|---------|
+| Block-based editable content | ACF Flexible Content (mature) | Components + Dynamic Zones | Visual "bloks" (best editor UX) | `blocks` field (proven here) |
+| Editor / admin UX | Excellent, familiar | OK | Excellent (visual, live) | Good, auto-generated |
+| Self-hosted / data ownership | ✅ yours | ✅ yours (or their Cloud) | ❌ SaaS — content on their servers | ✅ yours (your Postgres) |
+| Schema in code, git-versioned | ❌ UI (ACF-JSON export) | ~ partial | ❌ UI | ✅ TypeScript, in git |
+| Headless / decoupled | △ add-on (REST / WPGraphQL) | ✅ native | ✅ native | ✅ native + server-side Local API |
+| Stack / DX | PHP | Node | SaaS + SDKs | TypeScript / Next-native |
+| Extensibility | huge plugin ecosystem | plugins | apps / extensions | hooks + plugins + code |
+| Maturity / ecosystem | very high | established | established | newer (v3 is solid) |
+| Licensing | open source, self-host | open source (+ Cloud) | SaaS subscription | open source, self-host |
+
+**WordPress + ACF** — our reliable default; ACF Flexible Content is the block workflow we know best, and it works well. The concern is the stack: PHP is widely seen as aging, and headless is a bolt-on rather than a first-class mode.
+
+**Strapi** — headless-native and self-hostable, but in our trial it didn't win us over: some things were complex to build, and its repeater/component responses carried a lot of extra data (bloated API payloads).
+
+**Storyblok** — best-in-class visual block editing. The trade-off is that it's SaaS: the content lives on their platform (not self-hosted), which means a data-hosting dependency, recurring cost, and less control.
+
+**Payload** — keeps the ACF-style block power (we ported the Hero V2 / Product Reel blocks and rendered them decoupled), but self-hosted (data in our own Postgres), code-first in TypeScript (schema versioned in git), decoupled with a fast Local API, and it handled real logic (the PDF pipeline). Trade-offs: a newer ecosystem and a few tooling edges (ESM, interactive dev-push, type-gen).
+
+**Where it lands for us:** Payload sits in the sweet spot — ACF-like block editing **without** WordPress's PHP/aging concern and **without** Storyblok's SaaS data-hosting, and (in our experience) with a cleaner API and more control than Strapi. The price is a younger ecosystem and a few rough edges. For new block-based, decoupled, TypeScript projects, it's a strong default candidate.
+
+## 9. Preliminary verdict
 
 - Payload **handles real logic**, it's not just a pretty CRUD: the PDF pipeline (hooks + Jobs Queue + file processing) ran end-to-end and proves it.
 - Good fit for **content-heavy** products on a Next.js / TypeScript stack, where having admin + model + API in one place saves a lot.
