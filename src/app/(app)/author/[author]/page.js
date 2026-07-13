@@ -25,7 +25,7 @@ async function getBooks(authorId) {
     const payload = await getPayload({ config });
     const res = await payload.find({
         collection: "books",
-        where: { "credits.author": { in: [authorId] } },
+        where: { "credits.author": { in: [authorId] }, _status: { equals: "published" } },
         depth: 1,
     });
     return res.docs;

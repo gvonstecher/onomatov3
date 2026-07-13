@@ -22,7 +22,7 @@ async function getBook(slug) {
     const payload = await getPayload({ config });
     const res = await payload.find({
         collection: "books",
-        where: { slug: { equals: slug } },
+        where: { slug: { equals: slug }, _status: { equals: "published" } },
         depth: 2,
         limit: 1,
     });
@@ -38,7 +38,7 @@ async function getOtherBooks(idAuthor, idBook) {
     const payload = await getPayload({ config });
     const res = await payload.find({
         collection: "books",
-        where: { "credits.author": { in: [idAuthor] }, id: { not_equals: idBook } },
+        where: { "credits.author": { in: [idAuthor] }, id: { not_equals: idBook }, _status: { equals: "published" } },
         depth: 1,
     });
     return res.docs;
@@ -80,8 +80,10 @@ export default async function Book({params}) {
     const credits = book.credits || [];
     const primaryAuthor = credits[0]?.author;
     const authorId = typeof primaryAuthor === "object" ? primaryAuthor?.id : primaryAuthor;
-    const author = await getAuthor(authorId);
-    const otherBooks = await getOtherBooks(authorId, book.id);
+    // Guard against books with no valid credit author: skip the related-author
+    // lookups instead of issuing a query with an undefined id (which errors).
+    const author = authorId ? await getAuthor(authorId) : null;
+    const otherBooks = authorId ? await getOtherBooks(authorId, book.id) : [];
     let owns = false;
     let bookPagesUrl = [];
     if(session != null){

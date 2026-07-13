@@ -15,7 +15,7 @@ export default async function DecoupledPage({ params }) {
 
   const { docs } = await payload.find({
     collection: 'pages',
-    where: { slug: { equals: slug } },
+    where: { slug: { equals: slug }, _status: { equals: 'published' } },
     depth: 2,
     limit: 1,
   })

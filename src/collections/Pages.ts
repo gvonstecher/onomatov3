@@ -7,12 +7,26 @@ import { ProductReel } from '../blocks/ProductReel'
 // Content): editors add, reorder and remove blocks in the admin.
 export const Pages: CollectionConfig = {
   slug: 'pages',
+  // Draft/publish workflow. `_status` (draft|published) + version history are
+  // added automatically. Existing rows are migrated to `published` via SQL so
+  // they keep showing after this is enabled.
+  versions: {
+    drafts: true,
+    maxPerDoc: 50,
+  },
   access: {
-    read: () => true,
+    // Logged-in users (the admin) see everything; anonymous callers only get
+    // published documents. This guards the REST/GraphQL API; the frontend
+    // Local API filters `_status` explicitly (see the page queries).
+    read: ({ req }) => {
+      if (req.user) return true
+      return { _status: { equals: 'published' } }
+    },
   },
   admin: {
     group: 'Content',
     useAsTitle: 'title',
+    defaultColumns: ['title', 'slug', '_status'],
     // Live Preview: the admin renders the real frontend in an iframe and streams
     // the in-editor form state to it in real time (no save). `url` points each
     // Page at its own decoupled /p/[slug] route; breakpoints drive the

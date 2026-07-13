@@ -5,12 +5,24 @@ import type { CollectionConfig } from 'payload'
 // automatically by Payload (timestamps default to true).
 export const Books: CollectionConfig = {
   slug: 'books',
+  // Draft/publish workflow: authors can work on a book (cover, PDF, price) as a
+  // draft, then publish it to the catalog. `_status` + version history added
+  // automatically; existing rows migrated to `published` via SQL.
+  versions: {
+    drafts: true,
+    maxPerDoc: 50,
+  },
   access: {
-    read: () => true,
+    // Anonymous callers only get published books; the admin sees drafts too.
+    read: ({ req }) => {
+      if (req.user) return true
+      return { _status: { equals: 'published' } }
+    },
   },
   admin: {
     group: 'Catalog',
     useAsTitle: 'title',
+    defaultColumns: ['title', 'owner', 'price', '_status'],
   },
   hooks: {
     afterChange: [

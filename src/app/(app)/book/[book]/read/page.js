@@ -9,7 +9,7 @@ import LoginBtn from "@/components/actions/loginBtn";
 async function getBook(payload, slug) {
     const res = await payload.find({
         collection: "books",
-        where: { slug: { equals: slug } },
+        where: { slug: { equals: slug }, _status: { equals: "published" } },
         depth: 1,
         limit: 1,
     });

@@ -4,11 +4,16 @@ import config from "@payload-config";
 import { BookList } from "@/components/book/bookList";
 import { AuthorList } from "@/components/author/authorList";
 
+// The catalog changes as authors publish/unpublish books, so render per request
+// instead of letting Next serve a cached static home (which would show stale
+// content and leak drafts).
+export const dynamic = "force-dynamic";
+
 // Catalog reads now come from Payload's Local API instead of Prisma.
 async function getCatalog() {
 	const payload = await getPayload({ config });
 	const [books, authors] = await Promise.all([
-		payload.find({ collection: "books", depth: 2, limit: 6 }),
+		payload.find({ collection: "books", where: { _status: { equals: "published" } }, depth: 2, limit: 6 }),
 		payload.find({ collection: "authors", depth: 1, limit: 6 }),
 	]);
 	return { books: books.docs, authors: authors.docs };
