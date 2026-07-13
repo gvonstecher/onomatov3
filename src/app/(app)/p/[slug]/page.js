@@ -1,7 +1,7 @@
 import { getPayload } from 'payload'
 import config from '@payload-config'
 import { notFound } from 'next/navigation'
-import { RenderBlocks } from './RenderBlocks'
+import { PageClient } from './PageClient'
 
 // Decoupled page: the frontend asks Payload for a Page by slug and renders its
 // block layout. Payload is consumed purely as a content backend — this route
@@ -25,7 +25,7 @@ export default async function DecoupledPage({ params }) {
 
   return (
     <main>
-      <RenderBlocks blocks={page.layout ?? []} />
+      <PageClient page={page} />
     </main>
   )
 }
