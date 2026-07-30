@@ -44,10 +44,12 @@ export const Books: CollectionConfig = {
     {
       name: 'title',
       type: 'text',
+      localized: true,
     },
     {
       name: 'description',
       type: 'richText',
+      localized: true,
     },
     {
       name: 'price',

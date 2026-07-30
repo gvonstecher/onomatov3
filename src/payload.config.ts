@@ -26,6 +26,18 @@ const filename = fileURLToPath(import.meta.url)
 const dirname = path.dirname(filename)
 
 export default buildConfig({
+  // Field-level localization. Fields marked `localized: true` store one value
+  // per locale; the admin gets a locale switcher and the APIs accept a `locale`
+  // param. `fallback` returns the default-locale value when a translation is
+  // missing. Existing rows are migrated into the default locale (es) via SQL.
+  localization: {
+    locales: [
+      { label: 'Español', code: 'es' },
+      { label: 'English', code: 'en' },
+    ],
+    defaultLocale: 'es',
+    fallback: true,
+  },
   admin: {
     user: Users.slug,
     // Resolve custom admin component paths (admin.components.Cell, etc.)

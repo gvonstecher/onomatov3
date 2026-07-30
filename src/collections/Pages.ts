@@ -48,6 +48,7 @@ export const Pages: CollectionConfig = {
     {
       name: 'title',
       type: 'text',
+      localized: true,
     },
     {
       name: 'slug',
@@ -56,6 +57,10 @@ export const Pages: CollectionConfig = {
       index: true,
     },
     {
+      // NOTE: localizing the whole block layout requires a proper migration
+      // (adds a NOT NULL `_locale` to every existing block row), which dev
+      // `push` cannot do non-interactively. Left single-locale for now; the
+      // scalar content fields above/in other collections are localized.
       name: 'layout',
       type: 'blocks',
       blocks: [HeroV2, ProductReel],

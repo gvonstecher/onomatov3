@@ -28,6 +28,7 @@ export const Authors: CollectionConfig = {
     {
       name: 'bio',
       type: 'richText',
+      localized: true,
     },
     {
       // One author profile per user (enforces the 1:1 account↔profile link).

@@ -16,6 +16,7 @@ export const Tags: CollectionConfig = {
       name: 'name',
       type: 'text',
       required: true,
+      localized: true,
     },
     {
       // Books carrying this tag (reverse of Books.tags, a hasMany relationship).
